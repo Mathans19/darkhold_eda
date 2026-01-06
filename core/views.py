@@ -1,20 +1,41 @@
 from django.shortcuts import render, redirect
+from django.contrib import messages
 from .models import Dataset
 
 def home(request):
     """Redirects to the upload page."""
     return redirect('upload')
 
+def clear_session(request):
+    """Clears the session - useful for testing navigation restrictions."""
+    request.session.flush()
+    messages.info(request, "Session cleared. Upload a dataset to begin.")
+    return redirect('upload')
+
 def upload_file(request):
     """Handles file uploads."""
     if request.method == 'POST' and request.FILES.get('file'):
         uploaded_file = request.FILES['file']
-        dataset = Dataset.objects.create(file=uploaded_file, name=uploaded_file.name)
+        alias = request.POST.get('alias', '').strip()
+        dataset = Dataset.objects.create(
+            file=uploaded_file, 
+            name=alias or uploaded_file.name
+        )
         
         # Store dataset ID in session for downstream pages
         request.session['dataset_id'] = dataset.id
         
         return redirect('report')
+    
+    # Handle direct load from recent interactions
+    dataset_id = request.GET.get('id')
+    if dataset_id:
+        try:
+            dataset = Dataset.objects.get(id=dataset_id)
+            request.session['dataset_id'] = dataset.id
+            return redirect('report')
+        except Dataset.DoesNotExist:
+            pass
 
     recent_uploads = Dataset.objects.order_by('-uploaded_at')[:5]
     return render(request, 'upload.html', {'recent_uploads': recent_uploads})
@@ -26,9 +47,15 @@ def report(request):
     """Displays EDA report."""
     dataset_id = request.session.get('dataset_id')
     if not dataset_id:
+        messages.warning(request, "Manifest a reality fragment first to access the Report.")
         return redirect('upload')
     
-    dataset = Dataset.objects.get(id=dataset_id)
+    try:
+        dataset = Dataset.objects.get(id=dataset_id)
+    except Dataset.DoesNotExist:
+        request.session.pop('dataset_id', None)
+        messages.warning(request, "Dataset no longer exists. Please upload a new one.")
+        return redirect('upload')
     file_path = dataset.file.path
     
     try:
@@ -63,9 +90,15 @@ def clean_data(request):
     """Data cleaning interface."""
     dataset_id = request.session.get('dataset_id')
     if not dataset_id:
+        messages.warning(request, "Manifest a reality fragment first to access the Cleaning ritual.")
         return redirect('upload')
     
-    dataset = Dataset.objects.get(id=dataset_id)
+    try:
+        dataset = Dataset.objects.get(id=dataset_id)
+    except Dataset.DoesNotExist:
+        request.session.pop('dataset_id', None)
+        messages.warning(request, "Dataset no longer exists. Please upload a new one.")
+        return redirect('upload')
     file_path = dataset.file.path
     
     # helper for loading
@@ -138,9 +171,15 @@ def visualize(request):
     """Visualization interface."""
     dataset_id = request.session.get('dataset_id')
     if not dataset_id:
+        messages.warning(request, "Manifest a reality fragment first to access Visualizations.")
         return redirect('upload')
     
-    dataset = Dataset.objects.get(id=dataset_id)
+    try:
+        dataset = Dataset.objects.get(id=dataset_id)
+    except Dataset.DoesNotExist:
+        request.session.pop('dataset_id', None)
+        messages.warning(request, "Dataset no longer exists. Please upload a new one.")
+        return redirect('upload')
     file_path = dataset.file.path
     
     # Simple load helper (duplicate logic, could be refactored)
@@ -208,9 +247,15 @@ def ai_insights(request):
     """AI Chat interface."""
     dataset_id = request.session.get('dataset_id')
     if not dataset_id:
+        messages.warning(request, "Manifest a reality fragment first to access AI Insights.")
         return redirect('upload')
     
-    dataset = Dataset.objects.get(id=dataset_id)
+    try:
+        dataset = Dataset.objects.get(id=dataset_id)
+    except Dataset.DoesNotExist:
+        request.session.pop('dataset_id', None)
+        messages.warning(request, "Dataset no longer exists. Please upload a new one.")
+        return redirect('upload')
     
     if request.method == 'POST':
         user_message = request.POST.get('message')

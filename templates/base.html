@@ -42,7 +42,7 @@
     </script>
 
     <!-- GSAP for 3D Animations -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
 
     <style>
         :root {
@@ -140,85 +140,87 @@
             /* Soft compression */
         }
 
-        /* Page Transition: Physical Book Turn */
-        #book-ritual {
+        /* Manifestation Ritual: 3D Darkhold & Chaos */
+        #manifest-ritual {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            z-index: 10000;
-            pointer-events: none;
+            background: radial-gradient(circle at center, rgba(20, 0, 4, 0.98), #000);
+            z-index: 30000;
+            display: none;
+            align-items: center;
+            justify-content: center;
             perspective: 2500px;
+            pointer-events: all;
         }
 
-        .paper-page {
-            position: absolute;
-            top: 0;
-            width: 50%;
-            height: 100%;
-            background-color: #0d0103;
-            background-image:
-                linear-gradient(rgba(0, 0, 0, 0.5), transparent),
-                url('https://www.transparenttextures.com/patterns/dark-leather.png');
-            box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.8);
+        .manifest-book {
+            width: 280px;
+            height: 400px;
+            position: relative;
             transform-style: preserve-3d;
-            transition: transform 1.2s cubic-bezier(0.645, 0.045, 0.355, 1.000);
+            transform: rotateX(10deg) rotateY(-20deg) scale(0);
+        }
+
+        .book-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: #1a0505 url('https://www.transparenttextures.com/patterns/dark-leather.png');
+            border: 4px solid #3d0a0a;
+            border-radius: 8px;
+            box-shadow: inset 0 0 60px #000, 0 0 30px rgba(255, 41, 66, 0.1);
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
-            border: 1px solid rgba(255, 41, 66, 0.1);
-            opacity: 0;
         }
 
-        .paper-page.active {
-            opacity: 1;
+        .book-front {
+            transform: translateZ(25px);
         }
 
-        .page-forward {
-            right: 0;
-            transform-origin: left center;
+        .book-front::after {
+            content: '᚛ ᚧ ᚜';
+            font-family: 'Cinzel', serif;
+            font-size: 3.5rem;
+            color: var(--color-scarlet);
+            text-shadow: 0 0 20px var(--color-scarlet);
         }
 
-        .page-backward {
-            left: 0;
-            transform-origin: right center;
-        }
-
-        .turning-forward {
-            transform: rotateY(-180deg);
-        }
-
-        .turning-backward {
-            transform: rotateY(180deg);
-        }
-
-        .spine-shadow {
+        .book-spine {
             position: absolute;
             width: 50px;
             height: 100%;
-            background: linear-gradient(90deg, rgba(0, 0, 0, 0.8), transparent);
-            z-index: 10;
-        }
-
-        .page-forward .spine-shadow {
+            background: #0d0101;
             left: 0;
+            transform: rotateY(-90deg);
+            transform-origin: left;
         }
 
-        .page-backward .spine-shadow {
-            right: 0;
-            background: linear-gradient(-90deg, rgba(0, 0, 0, 0.8), transparent);
+        .chaos-nova {
+            position: absolute;
+            width: 50vw;
+            height: 50vw;
+            background: radial-gradient(circle, var(--color-scarlet), transparent 70%);
+            border-radius: 50%;
+            opacity: 0;
+            transform: scale(0);
+            mix-blend-mode: screen;
+            filter: blur(40px);
         }
 
-        .rune-glow {
+        .manifest-text {
+            position: absolute;
+            bottom: 15%;
             font-family: 'Cinzel', serif;
-            font-size: 15rem;
             color: var(--color-scarlet);
-            opacity: 0.1;
-            filter: blur(5px);
-            user-select: none;
+            letter-spacing: 5px;
+            opacity: 0;
+            text-shadow: 0 0 15px var(--color-scarlet);
         }
+
 
         /* 3D Reality Fragments */
         #reality-layer {
@@ -357,17 +359,49 @@
             }
         }
 
-        ::-webkit-scrollbar {
-            width: 8px;
+        /* Cinematic Notifications */
+        #chaos-toast-container {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            z-index: 100000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
         }
 
-        ::-webkit-scrollbar-track {
-            background: #0f0f0f;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--color-scarlet);
+        .chaos-toast {
+            background: rgba(15, 0, 2, 0.95);
+            border: 1px solid var(--color-scarlet);
+            box-shadow: 0 0 20px rgba(255, 41, 66, 0.4);
+            color: white;
+            padding: 1rem 2rem;
             border-radius: 4px;
+            font-family: 'Cinzel', serif;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transform: translateX(120%);
+            transition: transform 0.6s var(--ritual-ease);
+            pointer-events: all;
+        }
+
+        .chaos-toast.visible {
+            transform: translateX(0);
+        }
+
+        .chaos-toast i {
+            color: var(--color-scarlet);
+            text-shadow: 0 0 10px var(--color-scarlet);
+        }
+
+        .locked-nav {
+            opacity: 0.4;
+            cursor: pointer !important;
         }
     </style>
     {% block extra_head %}{% endblock %}
@@ -375,21 +409,16 @@
 
 <body>
 
-    <!-- Darkhold Ritual: Page Turn -->
-    <div id="book-ritual">
-        <div class="paper-page" id="ritual-page">
-            <div class="spine-shadow"></div>
-            <span class="rune-glow" id="ritual-rune">᚛</span>
+    <!-- Cinematic Notifications Container -->
+    <div id="chaos-toast-container">
+        {% if messages %}
+        {% for message in messages %}
+        <div class="chaos-toast" data-autohide="5000">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>{{ message }}</span>
         </div>
-    </div>
-
-    <!-- Loading Overlay -->
-    <div id="loading-overlay">
-        <h1 class="text-3xl md:text-5xl text-neon tracking-[0.4em] uppercase font-cinzel opacity-80 text-center mb-8">
-            Inscribing Reality...</h1>
-        <div class="hex-loader">
-            <div class="hex-loader-bar"></div>
-        </div>
+        {% endfor %}
+        {% endif %}
     </div>
 
     <!-- Backgrounds -->
@@ -415,6 +444,8 @@
                     <div class="ml-10 flex items-baseline space-x-8">
                         <a href="{% url 'upload' %}"
                             class="ritual-nav nav-link px-3 py-2 text-sm font-bold uppercase">Upload</a>
+
+                        {% if request.session.dataset_id %}
                         <a href="{% url 'report' %}"
                             class="ritual-nav nav-link px-3 py-2 text-sm font-bold uppercase">Report</a>
                         <a href="{% url 'clean' %}"
@@ -423,6 +454,16 @@
                             class="ritual-nav nav-link px-3 py-2 text-sm font-bold uppercase">Visualize</a>
                         <a href="{% url 'ai_insights' %}"
                             class="ritual-nav nav-link px-3 py-2 text-sm font-bold uppercase">Insights</a>
+                        {% else %}
+                        <span class="px-3 py-2 text-sm font-bold uppercase locked-nav"
+                            data-reason="Manifest a reality fragment first to access the Report.">Report</span>
+                        <span class="px-3 py-2 text-sm font-bold uppercase locked-nav"
+                            data-reason="Manifest a reality fragment first to access the Cleaning ritual.">Clean</span>
+                        <span class="px-3 py-2 text-sm font-bold uppercase locked-nav"
+                            data-reason="Manifest a reality fragment first to access Visualizations.">Visualize</span>
+                        <span class="px-3 py-2 text-sm font-bold uppercase locked-nav"
+                            data-reason="Manifest a reality fragment first to access AI Insights.">Insights</span>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -433,6 +474,16 @@
     <main class="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-10 relative z-10">
         {% block content %}{% endblock %}
     </main>
+
+    <!-- Manifestation Ritual Overlay -->
+    <div id="manifest-ritual">
+        <div class="manifest-book" id="ritual-book">
+            <div class="book-spine"></div>
+            <div class="book-face book-front"></div>
+        </div>
+        <div class="chaos-nova" id="ritual-nova"></div>
+        <div class="manifest-text" id="ritual-text">INSCRIBING REALITY...</div>
+    </div>
 
     <!-- Footer -->
     <footer class="glass-dark border-t border-white/5 mt-auto">
@@ -445,7 +496,7 @@
 
     <!-- Ritual Scripts -->
     <script>
-        // Cinematic Audio Ritual: Realistic Paper Turn
+        // Cinematic Audio Ritual: Realistic Paper Slide Synth
         const AudioRitual = {
             ctx: null,
             init() {
@@ -453,24 +504,30 @@
             },
             playPaperTurn() {
                 this.init();
-                const duration = 1.0;
+                const duration = 1.2;
                 const bufferSize = this.ctx.sampleRate * duration;
                 const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
                 const data = buffer.getChannelData(0);
 
-                for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+                // Brown noise based sliding sound
+                let lastOut = 0;
+                for (let i = 0; i < bufferSize; i++) {
+                    const white = Math.random() * 2 - 1;
+                    lastOut = (lastOut + (0.02 * white)) / 1.02;
+                    data[i] = lastOut * 3.5;
+                }
 
                 const source = this.ctx.createBufferSource();
                 source.buffer = buffer;
 
                 const filter = this.ctx.createBiquadFilter();
-                filter.type = 'bandpass';
-                filter.frequency.setValueAtTime(800, this.ctx.currentTime);
-                filter.frequency.exponentialRampToValueAtTime(400, this.ctx.currentTime + duration);
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(1200, this.ctx.currentTime);
+                filter.frequency.exponentialRampToValueAtTime(300, this.ctx.currentTime + duration);
 
                 const gain = this.ctx.createGain();
                 gain.gain.setValueAtTime(0, this.ctx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.05, this.ctx.currentTime + 0.1);
+                gain.gain.linearRampToValueAtTime(0.08, this.ctx.currentTime + 0.1);
                 gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
 
                 source.connect(filter);
@@ -481,54 +538,96 @@
             }
         };
 
-        const NAV_ORDER = { 'upload': 1, 'report': 2, 'clean': 3, 'visualize': 4, 'ai_insights': 5, 'home': 0 };
+        // Cinematic Notification System
+        const ChaosNotification = {
+            show(message, type = 'warning') {
+                const container = document.getElementById('chaos-toast-container');
+                const toast = document.createElement('div');
+                toast.className = 'chaos-toast';
+                toast.innerHTML = `
+                    <i class="fa-solid fa-${type === 'warning' ? 'triangle-exclamation' : 'circle-check'}"></i>
+                    <span>${message}</span>
+                `;
+                container.appendChild(toast);
+
+                // Trigger animation
+                setTimeout(() => toast.classList.add('visible'), 100);
+
+                // Remove after delay
+                setTimeout(() => {
+                    toast.classList.remove('visible');
+                    setTimeout(() => toast.remove(), 600);
+                }, 5000);
+            },
+            init() {
+                // Show existing Django messages
+                document.querySelectorAll('.chaos-toast').forEach(toast => {
+                    setTimeout(() => toast.classList.add('visible'), 500);
+                    setTimeout(() => {
+                        toast.classList.remove('visible');
+                        setTimeout(() => toast.remove(), 600);
+                    }, 5000);
+                });
+            }
+        };
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            ChaosNotification.init();
+        });
+
+        const NAV_ORDER = { 'upload': 1, 'report': 2, 'clean': 3, 'visualize': 4, 'ai-insights': 5, 'home': 0 };
         function getPathKey(path) {
             const part = path.split('/')[1] || 'home';
             return part;
         }
 
-        window.addEventListener('load', () => {
-            const loader = document.getElementById('loading-overlay');
-            setTimeout(() => {
-                loader.style.opacity = '0';
-                setTimeout(() => loader.style.display = 'none', 1000);
-            }, 100);
-        });
+        // Reality Manifestation System
+        const GrimoireRitual = {
+            async manifest(targetUrl) {
+                const overlay = document.getElementById('manifest-ritual');
+                const book = document.getElementById('ritual-book');
+                const nova = document.getElementById('ritual-nova');
+                const text = document.getElementById('ritual-text');
 
-        // Physical Book Turn Logic
+                overlay.style.display = 'flex';
+
+                const tl = gsap.timeline({
+                    onStart: () => setTimeout(() => window.location = targetUrl, 450)
+                });
+
+
+                // Book Manifestation
+                tl.fromTo(book, { scale: 0, rotateY: -90, rotateX: 20 }, { scale: 1, duration: 0.35, rotateY: 340, ease: "power2.out" });
+
+                tl.to(text, { opacity: 0.6, duration: 0.4 }, "-=0.4");
+
+                // Chaos Mist / Drift (Single cycle for transition)
+                tl.to(book, { y: "-=10", duration: 0.4, yoyo: true, ease: "sine.inOut" }, 0.15);
+
+
+                // Sudden Reality Nova (The Wipe)
+                tl.to(nova, { opacity: 1, scale: 12, duration: 0.5, ease: "power2.in" }, 0.2);
+
+                tl.to(text, { scale: 1.5, opacity: 0, duration: 0.6, ease: "power2.in" }, 1.4);
+            }
+        };
+
+        // Reality Navigation Ritual
         document.querySelectorAll('.ritual-nav').forEach(link => {
             link.addEventListener('click', (e) => {
                 const targetUrl = new URL(link.href);
-                const currentPath = window.location.pathname;
-                const targetPath = targetUrl.pathname;
-
-                if (currentPath === targetPath) return;
-
+                if (window.location.pathname === targetUrl.pathname) return;
                 e.preventDefault();
-                AudioRitual.playPaperTurn();
+                GrimoireRitual.manifest(link.href);
+            });
+        });
 
-                const currentIdx = NAV_ORDER[getPathKey(currentPath)] || 0;
-                const targetIdx = NAV_ORDER[getPathKey(targetPath)] || 0;
-
-                const ritualPage = document.getElementById('ritual-page');
-                const ritualRune = document.getElementById('ritual-rune');
-
-                ritualPage.classList.add('active');
-                ritualPage.classList.remove('page-forward', 'page-backward', 'turning-forward', 'turning-backward');
-
-                if (targetIdx >= currentIdx) {
-                    ritualPage.classList.add('page-forward');
-                    ritualRune.innerText = '᚜';
-                    void ritualPage.offsetWidth;
-                    ritualPage.classList.add('turning-forward');
-                } else {
-                    ritualPage.classList.add('page-backward');
-                    ritualRune.innerText = '᚛';
-                    void ritualPage.offsetWidth;
-                    ritualPage.classList.add('turning-backward');
-                }
-
-                setTimeout(() => window.location = link.href, 1000);
+        // Locked Navigation Handler
+        document.querySelectorAll('.locked-nav').forEach(span => {
+            span.addEventListener('click', () => {
+                const reason = span.getAttribute('data-reason');
+                ChaosNotification.show(reason);
             });
         });
 
@@ -536,24 +635,29 @@
         const realityLayer = document.getElementById('reality-layer');
         function spawnFragment() {
             const fragment = document.createElement('i');
-            const icons = ['fa-book', 'fa-feather-pointed', 'fa-scroll', 'fa-eye'];
+            const icons = ['fa-book', 'fa-feather-pointed', 'fa-scroll', 'fa-eye', 'fa-broom-ball', 'fa-hat-wizard', 'fa-crystal-ball', 'fa-fire', 'fa-bolt', 'fa-ghost', 'fa-hand-sparkles'];
             fragment.className = `fa-solid ${icons[Math.floor(Math.random() * icons.length)]} reality-fragment-3d`;
             fragment.style.left = `${Math.random() * 100}vw`;
             fragment.style.top = `${Math.random() * 100}vh`;
-            fragment.style.fontSize = `${Math.random() * 15 + 15}px`;
+            fragment.style.fontSize = `${Math.random() * 20 + 20}px`;
+            fragment.style.filter = `blur(${Math.random() * 2}px) drop-shadow(0 0 15px var(--color-scarlet))`;
 
             realityLayer.appendChild(fragment);
 
             gsap.to(fragment, {
-                z: 300,
-                rotateX: Math.random() * 180,
-                rotateY: Math.random() * 180,
-                duration: 20,
+                z: 800,
+                y: `${(Math.random() - 0.5) * 400}`,
+                x: `${(Math.random() - 0.5) * 400}`,
+                rotateX: Math.random() * 720,
+                rotateY: Math.random() * 720,
+                rotateZ: Math.random() * 360,
+                duration: Math.random() * 10 + 10,
                 opacity: 0,
+                ease: "power1.inOut",
                 onComplete: () => fragment.remove()
             });
         }
-        setInterval(spawnFragment, 5000);
+        setInterval(spawnFragment, 1200);
 
         // Particle System
         const canvas = document.getElementById('particle-canvas');
@@ -573,7 +677,7 @@
             }
             draw() { ctx.fillStyle = 'rgba(255, 41, 66, 0.1)'; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); }
         }
-        function initParticles() { for (let i = 0; i < 25; i++) particles.push(new Particle()); }
+        function initParticles() { for (let i = 0; i < 80; i++) particles.push(new Particle()); }
         function animateParticles() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             for (let i = 0; i < particles.length; i++) {
@@ -594,14 +698,10 @@
                 this.setupFocusBreathing();
             },
             setupInputReactivity() {
-                // Apply soft deformation to buttons and inputs
                 const interactive = document.querySelectorAll('button, input, .btn-energy, .nav-link, .ritual-nav');
-                interactive.forEach(el => {
-                    el.classList.add('reactive-surface');
-                });
+                interactive.forEach(el => el.classList.add('reactive-surface'));
             },
             setupFocusBreathing() {
-                // Active areas subtly brighten
                 document.addEventListener('focusin', (e) => {
                     const panel = e.target.closest('.glass-dark');
                     if (panel) {
@@ -611,25 +711,58 @@
                 });
                 document.addEventListener('focusout', (e) => {
                     const panel = e.target.closest('.glass-dark');
-                    if (panel) {
-                        panel.style.filter = '';
-                        panel.style.boxShadow = '';
-                    }
+                    if (panel) { panel.style.filter = ''; panel.style.boxShadow = ''; }
                 });
             }
         };
 
+        // Global Reality Modulation: High-Impact Energy Blast
+        const EnergyRitual = {
+            spawnBlast(x, y) {
+                const core = document.createElement('div');
+                core.className = 'energy-blast-core';
+                core.style.left = `${x - 20}px`;
+                core.style.top = `${y - 20}px`;
+
+                const ring = document.createElement('div');
+                ring.className = 'energy-blast-ring';
+                ring.style.left = `${x - 10}px`;
+                ring.style.top = `${y - 10}px`;
+
+                document.body.appendChild(core);
+                document.body.appendChild(ring);
+
+                const tl = gsap.timeline({
+                    onComplete: () => { core.remove(); ring.remove(); }
+                });
+
+                // Sudden explosive core
+                tl.fromTo(core, { scale: 0, opacity: 1 }, {
+                    scale: 3,
+                    opacity: 0,
+                    duration: 0.4,
+                    ease: "expo.out"
+                }, 0);
+
+                // Expanding shockwave ring
+                tl.fromTo(ring, { scale: 1, opacity: 0.8 }, {
+                    scale: 8,
+                    opacity: 0,
+                    duration: 0.6,
+                    ease: "power2.out"
+                }, 0.05);
+            }
+        };
+
+        document.addEventListener('mousedown', (e) => {
+            if (e.target.closest('button, .btn-energy, .nav-link, .ritual-nav, input[type="submit"]')) {
+                EnergyRitual.spawnBlast(e.clientX, e.clientY);
+            }
+        });
+
         window.addEventListener('DOMContentLoaded', () => MotionRitual.init());
 
-        // Realistic Ambient Drift for Fragment Layers
-        gsap.to('.reality-fragment-3d', {
-            y: "+=20",
-            x: "+=10",
-            duration: "random(10, 20)",
-            repeat: -1,
-            yoyo: true,
-            ease: "sine.inOut"
-        });
+        // Initial drift setup handled in spawnFragment for new elements
     </script>
 
     {% block extra_scripts %}{% endblock %}
