@@ -114,6 +114,35 @@
             </button>
         </form>
 
+        <button onclick="openModal('convert-dtype-modal')" class="btn-energy text-sm px-4 py-2 flex items-center gap-2">
+            <i class="fa-solid fa-arrows-rotate"></i> Convert Type
+        </button>
+
+        <button onclick="openModal('clean-text-modal')" class="btn-energy text-sm px-4 py-2 flex items-center gap-2">
+            <i class="fa-solid fa-broom"></i> Clean Text
+        </button>
+
+        <button onclick="openModal('replace-value-modal')" class="btn-energy text-sm px-4 py-2 flex items-center gap-2">
+            <i class="fa-solid fa-exchange-alt"></i> Replace
+        </button>
+
+        <button onclick="openModal('filter-rows-modal')" class="btn-energy text-sm px-4 py-2 flex items-center gap-2">
+            <i class="fa-solid fa-filter"></i> Filter
+        </button>
+
+        <button onclick="openModal('outliers-modal')" class="btn-energy text-sm px-4 py-2 flex items-center gap-2">
+            <i class="fa-solid fa-chart-scatter"></i> Outliers
+        </button>
+
+        <button onclick="openModal('group-rare-modal')" class="btn-energy text-sm px-4 py-2 flex items-center gap-2">
+            <i class="fa-solid fa-layer-group"></i> Group Rare
+        </button>
+
+        <button onclick="openModal('datetime-extract-modal')"
+            class="btn-energy text-sm px-4 py-2 flex items-center gap-2">
+            <i class="fa-solid fa-calendar-days"></i> Extract Date
+        </button>
+
         <div class="ml-auto text-xs text-gray-500 uppercase tracking-wider font-cinzel">
             Viewing <span class="text-scarlet font-bold">{{ total_rows }}</span> Timelines
         </div>
@@ -244,6 +273,325 @@
                 <button type="button" onclick="closeModal('fill-modal')"
                     class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
                 <button type="submit" class="btn-energy text-sm px-6 py-2">Fill</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Convert Data Type Modal -->
+<div id="convert-dtype-modal"
+    class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
+    <div
+        class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
+        </div>
+        <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Convert Data
+            Type</h3>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="convert_dtype">
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Column</label>
+                    <select name="column"
+                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                        {% for col in columns %}
+                        <option value="{{ col }}">{{ col }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Target
+                        Type</label>
+                    <select name="dtype"
+                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                        <option value="numeric">Numeric</option>
+                        <option value="categorical">Categorical</option>
+                        <option value="datetime">Datetime</option>
+                        <option value="string">String</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mt-8 flex justify-end gap-4">
+                <button type="button" onclick="closeModal('convert-dtype-modal')"
+                    class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
+                <button type="submit" class="btn-energy text-sm px-6 py-2">Convert</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Clean Text Modal -->
+<div id="clean-text-modal"
+    class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
+    <div
+        class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
+        </div>
+        <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Clean Text
+        </h3>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="clean_text">
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Column</label>
+                    <select name="column"
+                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                        {% for col in columns %}
+                        <option value="{{ col }}">{{ col }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Operation</label>
+                    <select name="operation"
+                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                        <option value="trim">Trim Spaces</option>
+                        <option value="lowercase">Lowercase</option>
+                        <option value="uppercase">Uppercase</option>
+                        <option value="empty_to_nan">Empty → NaN</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mt-8 flex justify-end gap-4">
+                <button type="button" onclick="closeModal('clean-text-modal')"
+                    class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
+                <button type="submit" class="btn-energy text-sm px-6 py-2">Clean</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Replace Value Modal -->
+<div id="replace-value-modal"
+    class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
+    <div
+        class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
+        </div>
+        <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Replace Value
+        </h3>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="replace_value">
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Column</label>
+                    <select name="column"
+                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                        {% for col in columns %}
+                        <option value="{{ col }}">{{ col }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Old Value</label>
+                    <input type="text" name="old_value"
+                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter"
+                        required>
+                </div>
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">New Value</label>
+                    <input type="text" name="new_value"
+                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter"
+                        required>
+                </div>
+            </div>
+            <div class="mt-8 flex justify-end gap-4">
+                <button type="button" onclick="closeModal('replace-value-modal')"
+                    class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
+                <button type="submit" class="btn-energy text-sm px-6 py-2">Replace</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Filter Rows Modal -->
+<div id="filter-rows-modal"
+    class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
+    <div
+        class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
+        </div>
+        <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Filter Rows
+        </h3>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="filter_rows">
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Column</label>
+                    <select name="column"
+                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                        {% for col in columns %}
+                        <option value="{{ col }}">{{ col }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Operator</label>
+                    <select name="operator"
+                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                        <option value="equals">Equals</option>
+                        <option value="not_equals">Not Equals</option>
+                        <option value="greater">Greater Than</option>
+                        <option value="less">Less Than</option>
+                        <option value="contains">Contains</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Value</label>
+                    <input type="text" name="value"
+                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter"
+                        required>
+                </div>
+            </div>
+            <div class="mt-8 flex justify-end gap-4">
+                <button type="button" onclick="closeModal('filter-rows-modal')"
+                    class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
+                <button type="submit" class="btn-energy text-sm px-6 py-2">Filter</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Handle Outliers Modal -->
+<div id="outliers-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
+    <div
+        class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
+        </div>
+        <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Handle
+            Outliers</h3>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="handle_outliers">
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Column</label>
+                    <select name="column"
+                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                        {% for col in columns %}
+                        <option value="{{ col }}">{{ col }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Method</label>
+                    <select name="method"
+                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                        <option value="iqr">IQR Method</option>
+                        <option value="zscore">Z-Score Method</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mt-8 flex justify-end gap-4">
+                <button type="button" onclick="closeModal('outliers-modal')"
+                    class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
+                <button type="submit" class="btn-energy text-sm px-6 py-2">Remove</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Group Rare Categories Modal -->
+<div id="group-rare-modal"
+    class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
+    <div
+        class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
+        </div>
+        <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Group Rare
+            Categories</h3>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="group_rare">
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Column</label>
+                    <select name="column"
+                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                        {% for col in columns %}
+                        <option value="{{ col }}">{{ col }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Threshold
+                        (%)</label>
+                    <input type="number" name="threshold" value="1" min="0.1" max="50" step="0.1"
+                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                    <p class="text-xs text-gray-500 mt-1">Categories below this % will be grouped as "Other"</p>
+                </div>
+            </div>
+            <div class="mt-8 flex justify-end gap-4">
+                <button type="button" onclick="closeModal('group-rare-modal')"
+                    class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
+                <button type="submit" class="btn-energy text-sm px-6 py-2">Group</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Datetime Feature Extraction Modal -->
+<div id="datetime-extract-modal"
+    class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
+    <div
+        class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
+        </div>
+        <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Extract
+            Datetime Features</h3>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="extract_datetime">
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Column</label>
+                    <select name="column"
+                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                        {% for col in columns %}
+                        <option value="{{ col }}">{{ col }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Features to
+                        Extract</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-2 text-white text-sm">
+                            <input type="checkbox" name="features" value="year"
+                                class="form-checkbox bg-black/50 border-gray-700 text-scarlet focus:ring-scarlet">
+                            Year
+                        </label>
+                        <label class="flex items-center gap-2 text-white text-sm">
+                            <input type="checkbox" name="features" value="month"
+                                class="form-checkbox bg-black/50 border-gray-700 text-scarlet focus:ring-scarlet">
+                            Month
+                        </label>
+                        <label class="flex items-center gap-2 text-white text-sm">
+                            <input type="checkbox" name="features" value="day"
+                                class="form-checkbox bg-black/50 border-gray-700 text-scarlet focus:ring-scarlet">
+                            Day
+                        </label>
+                        <label class="flex items-center gap-2 text-white text-sm">
+                            <input type="checkbox" name="features" value="dayofweek"
+                                class="form-checkbox bg-black/50 border-gray-700 text-scarlet focus:ring-scarlet">
+                            Day of Week
+                        </label>
+                        <label class="flex items-center gap-2 text-white text-sm">
+                            <input type="checkbox" name="features" value="hour"
+                                class="form-checkbox bg-black/50 border-gray-700 text-scarlet focus:ring-scarlet">
+                            Hour
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-8 flex justify-end gap-4">
+                <button type="button" onclick="closeModal('datetime-extract-modal')"
+                    class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
+                <button type="submit" class="btn-energy text-sm px-6 py-2">Extract</button>
             </div>
         </form>
     </div>

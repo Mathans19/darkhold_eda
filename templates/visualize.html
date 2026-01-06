@@ -4,7 +4,12 @@
 
 {% block extra_head %}
 <!-- Chart.js -->
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script
+    src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script src="https://unpkg.com/@sgratzl/chartjs-chart-boxplot@3.6.0/build/index.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix@1.1.1/dist/chartjs-chart-matrix.min.js"></script>
 <style>
     .option-btn {
         transition: all 0.3s ease;
@@ -64,6 +69,46 @@
                     title="Histogram">
                     <i class="fa-solid fa-chart-column text-xl"></i>
                 </button>
+                <button onclick="selectType('boxplot', this)"
+                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex justify-center text-gray-400"
+                    title="Box Plot">
+                    <i class="fa-solid fa-box text-xl"></i>
+                </button>
+                <button onclick="selectType('countplot', this)"
+                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex justify-center text-gray-400"
+                    title="Count Plot">
+                    <i class="fa-solid fa-chart-simple text-xl"></i>
+                </button>
+                <button onclick="selectType('correlation', this)"
+                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex justify-center text-gray-400"
+                    title="Correlation Heatmap">
+                    <i class="fa-solid fa-table-cells text-xl"></i>
+                </button>
+                <button onclick="selectType('missing', this)"
+                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex justify-center text-gray-400"
+                    title="Missing Values">
+                    <i class="fa-solid fa-eraser text-xl"></i>
+                </button>
+                <button onclick="selectType('grouped_bar', this)"
+                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex justify-center text-gray-400"
+                    title="Grouped Bar">
+                    <i class="fa-solid fa-layer-group text-xl"></i>
+                </button>
+                <button onclick="selectType('violin', this)"
+                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex justify-center text-gray-400"
+                    title="Violin Plot">
+                    <i class="fa-solid fa-music text-xl"></i>
+                </button>
+                <button onclick="selectType('pairplot', this)"
+                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex justify-center text-gray-400"
+                    title="Pairwise Scatter">
+                    <i class="fa-solid fa-circle-nodes text-xl"></i>
+                </button>
+                <button onclick="selectType('timeseries', this)"
+                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex justify-center text-gray-400"
+                    title="Time Series">
+                    <i class="fa-solid fa-clock text-xl"></i>
+                </button>
             </div>
         </div>
 
@@ -98,8 +143,15 @@
 
         <!-- Action -->
         <button onclick="renderChart()"
-            class="btn-energy mt-auto w-full flex items-center justify-center gap-2 font-bold py-4 text-base tracking-widest">
+            class="btn-energy w-full flex items-center justify-center gap-2 font-bold py-4 text-base tracking-widest">
             <i class="fa-solid fa-bolt"></i> Manifest Visualization
+        </button>
+
+        <!-- Export Button -->
+        <button onclick="exportChart()" id="export-btn"
+            class="mt-3 w-full bg-black/50 border border-gray-700 hover:border-scarlet text-white px-4 py-3 rounded flex items-center justify-center gap-2 font-bold text-sm tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            disabled>
+            <i class="fa-solid fa-download"></i> Export Chart (PNG)
         </button>
     </div>
 
@@ -147,8 +199,11 @@
 
         // Logic
         const yAxisGroup = document.getElementById('y-axis-group');
-        if (type === 'histogram' || type === 'pie') {
-            yAxisGroup.style.display = 'none'; // Hist/Pie only needs X usually (Frequency calc)
+        // Charts that don't need Y-axis selection
+        const noYAxisTypes = ['histogram', 'pie', 'countplot', 'boxplot', 'violin', 'missing', 'correlation'];
+
+        if (noYAxisTypes.includes(type)) {
+            yAxisGroup.style.display = 'none';
         } else {
             yAxisGroup.style.display = 'block';
         }
@@ -158,9 +213,21 @@
         const xVal = document.getElementById('x-axis').value;
         const yVal = document.getElementById('y-axis').value;
 
-        if (!xVal) {
-            alert("Define the primary dimension (X-Axis).");
-            return;
+        // Validation based on chart type
+        const singleAxisTypes = ['histogram', 'pie', 'countplot', 'boxplot', 'violin', 'missing'];
+
+        if (chartType === 'correlation') {
+            // Correlation needs no axes inputs
+        } else if (singleAxisTypes.includes(chartType)) {
+            if (chartType !== 'missing' && !xVal) {
+                alert("Define the primary dimension (X-Axis).");
+                return;
+            }
+        } else {
+            if (!xVal || !yVal) {
+                alert("Define both Chaos (X) and Order (Y) dimensions.");
+                return;
+            }
         }
 
         const btn = document.querySelector('button[onclick="renderChart()"]');
@@ -179,10 +246,11 @@
             // Destroy old chart
             if (currentChart) currentChart.destroy();
 
-            // Hide placeholder, show canvas
+            // Hide placeholder, show canvas and enable export
             document.getElementById('chart-placeholder').classList.add('hidden');
             const canvas = document.getElementById('canvas');
             canvas.classList.remove('hidden');
+            document.getElementById('export-btn').disabled = false;
 
             const ctx = canvas.getContext('2d');
 
@@ -191,35 +259,14 @@
             gradient.addColorStop(0, 'rgba(255, 41, 66, 0.6)');
             gradient.addColorStop(1, 'rgba(255, 41, 66, 0.05)');
 
-            // Create Chart
-            currentChart = new Chart(ctx, {
-                type: chartType === 'histogram' ? 'bar' : chartType,
-                data: {
-                    labels: data.labels,
-                    datasets: [{
-                        label: chartType === 'histogram' ? 'Frequency' : yVal || 'Count',
-                        data: data.values,
-                        backgroundColor: chartType === 'line' ? 'transparent' : gradient,
-                        borderColor: '#ff2942',
-                        borderWidth: 2,
-                        pointBackgroundColor: '#000',
-                        pointBorderColor: '#ff2942',
-                        pointHoverBackgroundColor: '#ff2942',
-                        pointHoverBorderColor: '#fff',
-                        tension: 0.4, // smooth curves
-                        fill: true
-                    }]
-                },
+            let config = {
+                type: 'bar',
+                data: {},
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: {
-                            labels: {
-                                color: '#e0e0e0',
-                                font: { family: 'Cinzel', size: 12 }
-                            }
-                        },
+                        legend: { labels: { color: '#e0e0e0', font: { family: 'Cinzel', size: 12 } } },
                         tooltip: {
                             backgroundColor: 'rgba(5, 1, 2, 0.9)',
                             titleColor: '#ff2942',
@@ -227,26 +274,182 @@
                             bodyColor: '#fff',
                             borderColor: 'rgba(255, 41, 66, 0.3)',
                             borderWidth: 1,
-                            padding: 10,
-                            displayColors: false
+                            padding: 10
                         }
                     },
                     scales: {
-                        y: {
-                            grid: { color: 'rgba(255,255,255,0.05)' },
-                            ticks: { color: '#9ca3af' }
-                        },
-                        x: {
-                            grid: { color: 'rgba(255,255,255,0.05)' },
-                            ticks: { color: '#9ca3af' }
-                        }
-                    },
-                    animation: {
-                        duration: 1500,
-                        easing: 'easeOutQuart'
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } }
                     }
                 }
-            });
+            };
+
+            // --- CHART SPECIFIC CONFIGS ---
+
+            if (chartType === 'bar' || chartType === 'line' || chartType === 'scatter' || chartType === 'count') {
+                config.type = chartType === 'count' ? 'bar' : chartType;
+                config.data = {
+                    labels: data.labels,
+                    datasets: [{
+                        label: yVal || 'Count',
+                        data: data.values,
+                        backgroundColor: chartType === 'line' ? 'transparent' : gradient,
+                        borderColor: '#ff2942',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true
+                    }]
+                };
+            }
+            else if (chartType === 'pie') {
+                config.type = 'pie';
+                config.data = {
+                    labels: data.labels,
+                    datasets: [{
+                        data: data.values,
+                        backgroundColor: [
+                            'rgba(255, 41, 66, 0.8)', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6',
+                            '#ec4899', '#6366f1', '#14b8a6', '#f97316', '#a855f7'
+                        ],
+                        borderColor: '#000',
+                        borderWidth: 2
+                    }]
+                };
+            }
+            else if (chartType === 'histogram') {
+                config.type = 'bar';
+                config.data = {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Frequency',
+                        data: data.values,
+                        backgroundColor: gradient,
+                        borderColor: '#ff2942',
+                        borderWidth: 1,
+                        barPercentage: 1.0,
+                        categoryPercentage: 1.0
+                    }]
+                };
+            }
+            else if (chartType === 'boxplot') {
+                config.type = 'boxplot';
+                config.data = {
+                    labels: [data.label],
+                    datasets: [{
+                        label: xVal,
+                        data: [[data.min, data.q1, data.median, data.q3, data.max]],
+                        backgroundColor: 'rgba(255, 41, 66, 0.4)',
+                        borderColor: '#ff2942',
+                        borderWidth: 2,
+                        outlierColor: '#fff',
+                        itemRadius: 3
+                    }]
+                };
+            }
+            else if (chartType === 'correlation') {
+                config.type = 'matrix';
+                config.data = {
+                    datasets: [{
+                        label: 'Correlation',
+                        data: data.data.map((row, i) => row.map((val, j) => ({ x: data.labels[i], y: data.labels[j], v: val }))).flat(),
+                        backgroundColor: (ctx) => {
+                            const val = ctx.raw.v;
+                            const alpha = Math.abs(val);
+                            return val > 0 ? `rgba(255, 41, 66, ${alpha})` : `rgba(59, 130, 246, ${alpha})`;
+                        },
+                        width: ({ chart }) => (chart.chartArea || {}).width / data.labels.length - 1,
+                        height: ({ chart }) => (chart.chartArea || {}).height / data.labels.length - 1
+                    }]
+                };
+                config.options.scales = {
+                    x: { type: 'category', labels: data.labels, grid: { display: false } },
+                    y: { type: 'category', labels: data.labels, grid: { display: false } }
+                };
+                config.options.plugins.tooltip.callbacks = {
+                    title: () => '',
+                    label: (context) => `${context.raw.x} x ${context.raw.y}: ${context.raw.v.toFixed(2)}`
+                };
+            }
+            else if (chartType === 'missing') {
+                config.type = 'bar';
+                config.data = {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Missing Values',
+                        data: data.values,
+                        backgroundColor: 'rgba(255,99,132,0.6)',
+                        borderColor: 'rgba(255,99,132,1)',
+                        borderWidth: 1
+                    }]
+                };
+                config.options.indexAxis = 'y'; // Horizontal bar
+            }
+            else if (chartType === 'timeseries') {
+                config.type = 'line';
+                config.data = {
+                    labels: data.labels,
+                    datasets: [{
+                        label: yVal,
+                        data: data.values,
+                        borderColor: '#ff2942',
+                        backgroundColor: 'rgba(255, 41, 66, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0
+                    }]
+                };
+                config.options.scales.x = {
+                    type: 'time',
+                    time: { unit: 'day' },
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { color: '#9ca3af' }
+                };
+            }
+            else if (chartType === 'grouped_bar') {
+                config.type = 'bar';
+                config.data = data; // data structure is already set in views.py
+                // Add colors
+                const colors = ['#ff2942', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
+                config.data.datasets.forEach((ds, i) => {
+                    ds.backgroundColor = colors[i % colors.length];
+                });
+            }
+            else if (chartType === 'violin') {
+                // Approximating Violin with BoxPlot capability or just disabling for now as strict violin is hard
+                // Using Bar/Histogram representation of distribution
+                config.type = 'bar';
+
+                // Correcting labels for JS: formatting bins to 2 decimal places
+                const formattedLabels = data.bins.slice(0, -1).map(b => b.toFixed(2));
+
+                config.data = {
+                    labels: formattedLabels, // Simulating
+                    datasets: [{
+                        label: 'Distribution Shape',
+                        data: data.distribution,
+                        backgroundColor: gradient,
+                        tension: 0.4
+                    }]
+                };
+                // NOTE: True violin plots are complex in Chart.js. Using dist histogram for now.
+            }
+            else if (chartType === 'pairplot') {
+                config.type = 'scatter';
+                config.data = {
+                    datasets: [{
+                        label: `${data.labels[0]} vs ${data.labels[1]}`,
+                        data: data.x.map((x, i) => ({ x: x, y: data.y[i] })),
+                        backgroundColor: '#ff2942'
+                    }]
+                };
+                config.options.scales = {
+                    x: { title: { display: true, text: data.labels[0], color: '#fff' } },
+                    y: { title: { display: true, text: data.labels[1], color: '#fff' } }
+                };
+            }
+
+            // Render
+            currentChart = new Chart(ctx, config);
 
         } catch (e) {
             alert("Visualization Collapse: " + e.message);
@@ -254,6 +457,17 @@
             btn.innerHTML = originalText;
             btn.disabled = false;
         }
+    }
+
+    function exportChart() {
+        const canvas = document.getElementById('canvas');
+        if (!currentChart) return;
+
+        // Create link
+        const link = document.createElement('a');
+        link.download = `scarlet_insight_${chartType}_${new Date().getTime()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
     }
 </script>
 {% endblock %}

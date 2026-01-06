@@ -144,6 +144,126 @@
         </div>
     </div>
 
+    <!-- Per-Column Missing Values -->
+    <div class="glass-dark p-6 rounded-xl shadow-void">
+        <h3 class="text-lg font-bold text-white mb-6 border-b border-white/10 pb-4 font-cinzel flex items-center gap-3">
+            <i class="fa-solid fa-eraser text-scarlet"></i>
+            Per-Column Missing Values
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for item in missing_per_column %}
+            <div class="p-4 bg-void border border-white/10 rounded hover:border-scarlet transition-colors">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="text-gray-300 font-medium text-sm">{{ item.column }}</span>
+                    <span class="px-2 py-0.5 bg-scarlet/10 text-scarlet rounded text-xs font-bold">
+                        {{ item.missing_pct }}%
+                    </span>
+                </div>
+                <div class="text-gray-400 text-xs">
+                    {{ item.missing_count }} missing values
+                </div>
+                <div class="mt-2 h-1 bg-gray-700 rounded overflow-hidden">
+                    <div class="h-full bg-scarlet" style="--width: {{ item.missing_pct }}%; width: var(--width);"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Per-Column Unique Values -->
+    <div class="glass-dark p-6 rounded-xl shadow-void">
+        <h3 class="text-lg font-bold text-white mb-6 border-b border-white/10 pb-4 font-cinzel flex items-center gap-3">
+            <i class="fa-solid fa-fingerprint text-scarlet"></i>
+            Per-Column Unique Values
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for item in unique_per_column %}
+            <div class="p-4 bg-void border border-white/10 rounded hover:border-scarlet transition-colors">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="text-gray-300 font-medium text-sm">{{ item.column }}</span>
+                    <span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded text-xs font-bold">
+                        {{ item.unique_pct }}%
+                    </span>
+                </div>
+                <div class="text-gray-400 text-xs">
+                    {{ item.unique_count }} unique values
+                </div>
+                <div class="mt-2 h-1 bg-gray-700 rounded overflow-hidden">
+                    <div class="h-full bg-blue-500" style="--width: {{ item.unique_pct }}%; width: var(--width);"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Categorical Frequency Summary -->
+    {% if categorical_summary %}
+    <div class="glass-dark p-6 rounded-xl shadow-void">
+        <h3 class="text-lg font-bold text-white mb-6 border-b border-white/10 pb-4 font-cinzel flex items-center gap-3">
+            <i class="fa-solid fa-chart-pie text-scarlet"></i>
+            Categorical Value Frequencies <span
+                class="text-sm text-gray-500 font-normal normal-case ml-2 font-inter">(Top 5)</span>
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {% for cat in categorical_summary %}
+            <div class="p-4 bg-void border border-white/10 rounded">
+                <h4 class="text-white font-semibold mb-3 text-sm">{{ cat.column }}</h4>
+                <div class="space-y-2">
+                    {% for val in cat.top_values %}
+                    <div class="flex items-center gap-3">
+                        <div class="flex-1 min-w-0">
+                            <div class="text-gray-300 text-xs truncate">{{ val.value }}</div>
+                            <div class="mt-1 h-1.5 bg-gray-700 rounded overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-scarlet to-pink-500"
+                                    style="--width: {{ val.percentage }}%; width: var(--width);"></div>
+                            </div>
+                        </div>
+                        <span class="text-scarlet text-xs font-bold whitespace-nowrap">{{ val.percentage }}%</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+<!-- Numeric Distribution Indicators -->
+{% if numeric_distribution %}
+<div class="glass-dark p-6 rounded-xl shadow-void">
+    <h3 class="text-lg font-bold text-white mb-6 border-b border-white/10 pb-4 font-cinzel flex items-center gap-3">
+        <i class="fa-solid fa-chart-line text-scarlet"></i>
+        Numeric Distribution Shape
+    </h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for dist in numeric_distribution %}
+        <div class="p-4 bg-void border border-white/10 rounded hover:border-scarlet transition-colors">
+            <div class="mb-3">
+                <span class="text-gray-300 font-medium text-sm">{{ dist.column }}</span>
+            </div>
+            <div class="space-y-2">
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-400 text-xs">Skewness:</span>
+                    <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 rounded text-xs font-bold">
+                        {{ dist.skew_label }}
+                    </span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-400 text-xs">Skew Value:</span>
+                    <span class="text-white text-xs font-mono">{{ dist.skewness }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-400 text-xs">Outliers:</span>
+                    <span class="text-orange-400 text-xs font-bold">
+                        {{ dist.outliers }} <span class="opacity-75">({{ dist.outlier_pct_val }}%)</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
     <!-- Data Preview (Head) -->
     <div class="glass-dark rounded-xl overflow-hidden animate__animated animate__fadeInUp border border-white/5"
         style="animation-delay: 0.1s;">

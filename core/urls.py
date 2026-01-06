@@ -10,3 +10,5 @@ urlpatterns = [
     path('visualize/', views.visualize, name='visualize'),
     path('ai-insights/', views.ai_insights, name='ai_insights'),
 ]
+# Force Reload
+
