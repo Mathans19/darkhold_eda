@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Upload Data | Scarlet EDA{% endblock %}
+{% block title %}Manifest Reality | Scarlet EDA{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -12,11 +12,11 @@
         overflow: hidden;
     }
 
-    .upload-zone:hover,
-    .upload-zone.drag-active {
+    .upload-zone.drag-active,
+    .upload-zone.file-selected {
         background: rgba(255, 36, 36, 0.05);
-        border-color: var(--scarlet-primary);
-        box-shadow: 0 0 30px rgba(255, 36, 36, 0.2), inset 0 0 20px rgba(255, 36, 36, 0.1);
+        border-color: var(--color-scarlet);
+        box-shadow: 0 0 30px rgba(255, 41, 66, 0.2), inset 0 0 20px rgba(255, 41, 66, 0.1);
     }
 
     .upload-zone::before {
@@ -48,15 +48,17 @@
         }
     }
 
-    .chaos-border {
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        z-index: 10;
-        border: 1px solid transparent;
-        mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
-        -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
-        mask-composite: exclude;
+    .alias-input-container {
+        max-height: 0;
+        opacity: 0;
+        overflow: hidden;
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .alias-input-container.visible {
+        max-height: 200px;
+        opacity: 1;
+        margin-top: 2rem;
     }
 </style>
 {% endblock %}
@@ -76,79 +78,118 @@
     </div>
 
     <!-- Upload Area -->
-    <div class="glass-dark p-1 rounded-2xl relative group">
-        <!-- Magic Glow Border Effect -->
-        <div
-            class="absolute -inset-0.5 bg-gradient-to-r from-red-600 to-red-900 rounded-2xl opacity-20 blur group-hover:opacity-60 transition duration-1000 group-hover:duration-200">
-        </div>
-
-        <form method="post" enctype="multipart/form-data" id="upload-form"
-            class="relative bg-black/60 rounded-xl h-80 flex flex-col items-center justify-center cursor-pointer upload-zone backdrop-blur-md">
-            {% csrf_token %}
-            <input type="file" name="file" id="file-input" class="hidden" accept=".csv,.xlsx,.xls,.json">
-
-            <div class="z-20 flex flex-col items-center space-y-6">
-                <!-- Icon -->
-                <div
-                    class="w-24 h-24 rounded-full bg-void border border-scarlet flex items-center justify-center shadow-neon group-hover:scale-110 transition-transform duration-500">
-                    <i class="fa-solid fa-cloud-bolt text-4xl text-scarlet group-hover:animate-pulse"></i>
-                </div>
-
-                <div class="text-center space-y-2">
-                    <p class="text-2xl font-cinzel text-white tracking-widest uppercase">Drag & Drop</p>
-                    <p class="text-sm text-red-400/60 font-inter">CSV, Excel, JSON</p>
-                </div>
+    <form method="post" enctype="multipart/form-data" id="upload-form" class="space-y-6">
+        {% csrf_token %}
+        <div class="glass-dark p-1 rounded-2xl relative group">
+            <div
+                class="absolute -inset-0.5 bg-gradient-to-r from-red-600 to-red-900 rounded-2xl opacity-20 blur group-hover:opacity-40 transition duration-1000">
             </div>
 
-            <!-- Scanning Line Animation -->
-            <div id="scan-line"
-                class="absolute top-0 left-0 w-full h-1 bg-scarlet shadow-[0_0_15px_#ff2942] opacity-0 transition-opacity duration-300">
-            </div>
+            <div id="drop-zone"
+                class="relative bg-black/60 rounded-xl min-h-[320px] flex flex-col items-center justify-center cursor-pointer upload-zone backdrop-blur-md p-8">
+                <input type="file" name="file" id="file-input" class="hidden" accept=".csv,.xlsx,.xls,.json">
 
-            <!-- Uploading Spinner -->
-            <div id="upload-status"
-                class="absolute inset-0 bg-void/90 backdrop-blur-sm z-30 flex flex-col items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
-                <div class="relative">
-                    <div class="w-20 h-20 border-t-2 border-b-2 border-scarlet rounded-full animate-spin"></div>
-                    <div class="absolute inset-0 flex items-center justify-center">
-                        <i class="fa-solid fa-chaos text-scarlet animate-pulse"></i>
+                <div id="upload-prompt" class="z-20 flex flex-col items-center space-y-6">
+                    <div
+                        class="w-24 h-24 rounded-full bg-void border border-scarlet flex items-center justify-center shadow-neon group-hover:scale-110 transition-transform duration-500">
+                        <i class="fa-solid fa-cloud-bolt text-4xl text-scarlet group-hover:animate-pulse"></i>
+                    </div>
+                    <div class="text-center space-y-2">
+                        <p class="text-2xl font-cinzel text-white tracking-widest uppercase">Drag & Drop</p>
+                        <p class="text-sm text-red-400/60 font-inter">CSV, Excel, JSON</p>
                     </div>
                 </div>
-                <p class="text-scarlet tracking-widest uppercase text-sm font-bold mt-4 animate-pulse">Warping
-                    Reality...</p>
+
+                <div id="file-info" class="hidden z-20 flex flex-col items-center space-y-4 text-center">
+                    <div
+                        class="w-20 h-20 rounded-xl bg-scarlet/10 border border-scarlet flex items-center justify-center shadow-neon">
+                        <i class="fa-solid fa-file-csv text-3xl text-scarlet"></i>
+                    </div>
+                    <div>
+                        <p id="selected-filename" class="text-xl font-cinzel text-white truncate max-w-md"></p>
+                        <p class="text-xs text-gray-500 uppercase tracking-widest mt-1">Reality Fragment Identified</p>
+                    </div>
+                    <button type="button" onclick="resetUpload(event)"
+                        class="text-xs text-gray-400 hover:text-scarlet transition-colors uppercase tracking-widest">
+                        Change Fragment
+                    </button>
+                </div>
+
+                <!-- Scanning Line -->
+                <div id="scan-line"
+                    class="absolute top-0 left-0 w-full h-1 bg-scarlet shadow-[0_0_15px_#ff2942] opacity-0 transition-opacity">
+                </div>
+
+                <!-- Overlay -->
+                <div id="upload-status"
+                    class="absolute inset-0 bg-void/90 backdrop-blur-sm z-30 flex flex-col items-center justify-center opacity-0 pointer-events-none transition-opacity">
+                    <div class="relative">
+                        <div class="w-20 h-20 border-t-2 border-b-2 border-scarlet rounded-full animate-spin"></div>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <i class="fa-solid fa-wand-magic-sparkles text-scarlet animate-pulse"></i>
+                        </div>
+                    </div>
+                    <p class="text-scarlet tracking-widest uppercase text-sm font-bold mt-4 animate-pulse">Inscribing
+                        Reality...</p>
+                </div>
             </div>
-        </form>
-    </div>
+        </div>
+
+        <!-- Alias & Submit Area -->
+        <div id="alias-area" class="alias-input-container">
+            <div class="glass-dark p-6 rounded-xl border border-white/5 space-y-6">
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 mb-3 font-bold tracking-[0.2em]">Dataset Alias
+                        (Optional)</label>
+                    <input type="text" name="alias" id="alias-input"
+                        class="w-full bg-black/40 border border-white/10 rounded-lg p-4 text-white focus:border-scarlet outline-none font-inter transition-all placeholder:text-gray-700"
+                        placeholder="Give this reality a name...">
+                </div>
+
+                <button type="submit" id="submit-btn"
+                    class="btn-energy w-full py-5 text-lg flex items-center justify-center gap-3 group">
+                    <i class="fa-solid fa-bolt-lightning text-scarlet group-hover:scale-125 transition-transform"></i>
+                    Start Manifestation
+                </button>
+            </div>
+        </div>
+    </form>
 
     <!-- Recent Uploads -->
-    <div class="mt-16">
-        <h3 class="text-white/60 uppercase tracking-[0.2em] text-sm font-semibold mb-6 flex items-center gap-3">
-            <span class="w-2 h-2 bg-scarlet rounded-full shadow-neon"></span>
+    <div class="mt-20">
+        <h3 class="text-white/60 uppercase tracking-[0.3em] text-xs font-bold mb-8 flex items-center gap-4">
+            <span class="w-8 h-px bg-scarlet/30"></span>
             Recent Interactions
+            <span class="flex-grow h-px bg-white/5"></span>
         </h3>
+
         <div class="grid gap-4">
             {% for dataset in recent_uploads %}
             <div
-                class="glass-dark p-5 rounded-lg flex items-center justify-between hover:bg-white/5 transition duration-300 group border-l-2 border-transparent hover:border-l-scarlet">
-                <div class="flex items-center gap-5">
+                class="glass-dark p-6 rounded-xl flex items-center justify-between hover:bg-white/5 transition duration-500 group border border-white/5 hover:border-scarlet/30">
+                <div class="flex items-center gap-6">
                     <div
-                        class="w-12 h-12 rounded bg-void/50 border border-white/10 flex items-center justify-center text-scarlet shadow-[0_0_10px_rgba(255,41,66,0.1)]">
-                        <i class="fa-solid fa-database text-lg"></i>
+                        class="w-14 h-14 rounded-lg bg-void/80 border border-white/5 flex items-center justify-center text-scarlet shadow-void group-hover:shadow-neon transition-all duration-500">
+                        <i class="fa-solid fa-database text-xl"></i>
                     </div>
                     <div>
-                        <h4 class="text-white font-cinzel tracking-wider group-hover:text-scarlet transition-colors">{{
-                            dataset.name }}</h4>
-                        <p class="text-xs text-gray-500 font-mono mt-1">{{ dataset.uploaded_at|date:"M d, Y • H:i" }}
+                        <h4
+                            class="text-lg font-cinzel text-white tracking-wide group-hover:text-scarlet transition-colors">
+                            {{ dataset.name }}
+                        </h4>
+                        <p class="text-[10px] text-gray-500 uppercase tracking-widest mt-1 font-inter">
+                            {{ dataset.uploaded_at|date:"M d, Y • H:i" }}
                         </p>
                     </div>
                 </div>
-                <button class="btn-energy text-xs py-2 px-4">
+                <a href="{% url 'upload' %}?id={{ dataset.id }}" class="ritual-nav btn-energy text-xs py-2 px-6">
                     Load
-                </button>
+                </a>
             </div>
             {% empty %}
-            <div class="text-center py-12 glass-dark rounded-lg">
-                <p class="text-gray-500 italic font-cinzel">No recent distortions found in the timeline.</p>
+            <div class="text-center py-16 glass-dark rounded-xl border border-dashed border-white/5">
+                <p class="text-gray-600 italic font-cinzel tracking-widest uppercase text-sm">No recent distortions
+                    found in the timeline.</p>
             </div>
             {% endfor %}
         </div>
@@ -156,46 +197,42 @@
 </div>
 
 <script>
-    const dropZone = document.getElementById('upload-form');
+    const dropZone = document.getElementById('drop-zone');
     const fileInput = document.getElementById('file-input');
+    const fileInfo = document.getElementById('file-info');
+    const uploadPrompt = document.getElementById('upload-prompt');
+    const selectedFilename = document.getElementById('selected-filename');
+    const aliasArea = document.getElementById('alias-area');
     const scanLine = document.getElementById('scan-line');
     const uploadStatus = document.getElementById('upload-status');
+    const uploadForm = document.getElementById('upload-form');
 
     // Drag & Drop Events
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, preventDefaults, false);
+        dropZone.addEventListener(eventName, e => {
+            e.preventDefault();
+            e.stopPropagation();
+        }, false);
     });
 
-    function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-
     ['dragenter', 'dragover'].forEach(eventName => {
-        dropZone.addEventListener(eventName, highlight, false);
+        dropZone.addEventListener(eventName, () => dropZone.classList.add('drag-active'), false);
     });
 
     ['dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, unhighlight, false);
+        dropZone.addEventListener(eventName, () => dropZone.classList.remove('drag-active'), false);
     });
 
-    function highlight(e) {
-        dropZone.classList.add('drag-active');
-    }
-
-    function unhighlight(e) {
-        dropZone.classList.remove('drag-active');
-    }
-
-    dropZone.addEventListener('drop', handleDrop, false);
-
-    function handleDrop(e) {
+    dropZone.addEventListener('drop', e => {
         const dt = e.dataTransfer;
-        const files = dt.files;
-        handleFiles(files);
-    }
+        handleFiles(dt.files);
+    }, false);
 
-    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('click', () => {
+        if (!fileInput.value && fileInfo.classList.contains('hidden')) {
+            fileInput.click();
+        }
+    });
 
     fileInput.addEventListener('change', function () {
         handleFiles(this.files);
@@ -204,21 +241,42 @@
     function handleFiles(files) {
         if (files.length > 0) {
             const file = files[0];
-            uploadFile(file);
+            selectedFilename.textContent = file.name;
+
+            // Show file info, hide prompt
+            uploadPrompt.classList.add('hidden');
+            fileInfo.classList.remove('hidden');
+            dropZone.classList.add('file-selected');
+
+            // Show alias & submit area
+            aliasArea.classList.add('visible');
         }
     }
 
-    function uploadFile(file) {
-        // Show scanning animation
+    function resetUpload(e) {
+        e.stopPropagation();
+        fileInput.value = '';
+        uploadPrompt.classList.remove('hidden');
+        fileInfo.classList.add('hidden');
+        dropZone.classList.remove('file-selected');
+        aliasArea.classList.remove('visible');
+    }
+
+    uploadForm.addEventListener('submit', function (e) {
+        if (!fileInput.files.length) {
+            e.preventDefault();
+            alert('Please select a reality fragment (file) first.');
+            return;
+        }
+
+        // Show cinematic manifestation
         scanLine.style.opacity = '1';
         gsap.to(scanLine, { top: '100%', duration: 1.5, repeat: -1, ease: 'linear' });
 
-        // Show status overlay
         uploadStatus.style.opacity = '1';
         uploadStatus.style.pointerEvents = 'auto';
 
-        // Submit form
-        dropZone.submit();
-    }
+        // Let the form submit normally
+    });
 </script>
 {% endblock %}
