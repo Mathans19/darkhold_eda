@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Scarlet EDA | Chaos & Void{% endblock title %}</title>
+
+    <!-- Google Fonts: Cinzel (Headers) & Inter (Body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+
+    <!-- FontAwesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        void: '#050102',
+                        scarlet: '#ff2942',
+                        blood: '#8a0000',
+                    },
+                    fontFamily: {
+                        cinzel: ['Cinzel', 'serif'],
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'neon': '0 0 10px rgba(255, 41, 66, 0.5), 0 0 20px rgba(255, 41, 66, 0.3)',
+                        'void': '0 4px 30px rgba(0, 0, 0, 0.8)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- GSAP for 3D Animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <style>
+        :root {
+            --color-void: #050102;
+            --color-scarlet: #ff2942;
+            --color-blood: #8a0000;
+            --glass-bg: rgba(20, 0, 0, 0.6);
+            --glass-border: rgba(255, 41, 66, 0.2);
+            --text-glow: 0 0 10px rgba(255, 41, 66, 0.6);
+
+            /* --- Phase 6: Global Motion Language --- */
+            --ritual-ease: cubic-bezier(0.16, 1, 0.3, 1);
+            /* Quintic Out: Snappy start, smooth settle */
+            --ritual-duration: 0.6s;
+            --depth-bg: -100px;
+            --depth-panel: 0px;
+            --depth-front: 40px;
+            /* -------------------------------------- */
+        }
+
+        * {
+            transition-timing-function: var(--ritual-ease) !important;
+        }
+
+        body {
+            background-color: var(--color-void);
+            font-family: 'Inter', sans-serif;
+            color: #e0e0e0;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-family: 'Cinzel', serif;
+            letter-spacing: 0.05em;
+        }
+
+        /* Background System */
+        #bg-image {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -2;
+            background-image: url('{% static "images/bg-scarlet-witch.jpg" %}');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.15;
+            mix-blend-mode: luminosity;
+        }
+
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Glassmorphism & Depth Hierarchy */
+        .glass-dark {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.8);
+            transform: translateZ(var(--depth-panel));
+            transition: transform var(--ritual-duration) var(--ritual-ease),
+                box-shadow var(--ritual-duration) var(--ritual-ease),
+                filter var(--ritual-duration) var(--ritual-ease);
+        }
+
+        .glass-dark:hover {
+            transform: translateZ(var(--depth-front)) scale(1.01);
+            filter: brightness(1.1);
+            box-shadow: 0 10px 40px rgba(255, 41, 66, 0.15);
+        }
+
+        .reactive-surface {
+            cursor: pointer;
+            transition: transform 0.2s var(--ritual-ease);
+        }
+
+        .reactive-surface:active {
+            transform: scale(0.985) translateY(1px);
+            /* Soft compression */
+        }
+
+        /* Page Transition: Physical Book Turn */
+        #book-ritual {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 10000;
+            pointer-events: none;
+            perspective: 2500px;
+        }
+
+        .paper-page {
+            position: absolute;
+            top: 0;
+            width: 50%;
+            height: 100%;
+            background-color: #0d0103;
+            background-image:
+                linear-gradient(rgba(0, 0, 0, 0.5), transparent),
+                url('https://www.transparenttextures.com/patterns/dark-leather.png');
+            box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.8);
+            transform-style: preserve-3d;
+            transition: transform 1.2s cubic-bezier(0.645, 0.045, 0.355, 1.000);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 1px solid rgba(255, 41, 66, 0.1);
+            opacity: 0;
+        }
+
+        .paper-page.active {
+            opacity: 1;
+        }
+
+        .page-forward {
+            right: 0;
+            transform-origin: left center;
+        }
+
+        .page-backward {
+            left: 0;
+            transform-origin: right center;
+        }
+
+        .turning-forward {
+            transform: rotateY(-180deg);
+        }
+
+        .turning-backward {
+            transform: rotateY(180deg);
+        }
+
+        .spine-shadow {
+            position: absolute;
+            width: 50px;
+            height: 100%;
+            background: linear-gradient(90deg, rgba(0, 0, 0, 0.8), transparent);
+            z-index: 10;
+        }
+
+        .page-forward .spine-shadow {
+            left: 0;
+        }
+
+        .page-backward .spine-shadow {
+            right: 0;
+            background: linear-gradient(-90deg, rgba(0, 0, 0, 0.8), transparent);
+        }
+
+        .rune-glow {
+            font-family: 'Cinzel', serif;
+            font-size: 15rem;
+            color: var(--color-scarlet);
+            opacity: 0.1;
+            filter: blur(5px);
+            user-select: none;
+        }
+
+        /* 3D Reality Fragments */
+        #reality-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            perspective: 1000px;
+        }
+
+        .reality-fragment-3d {
+            position: absolute;
+            color: var(--color-scarlet);
+            opacity: 0.15;
+            filter: drop-shadow(0 0 10px var(--color-scarlet));
+        }
+
+        /* Navigation Style */
+        .nav-link {
+            color: #a0a0a0;
+            font-family: 'Cinzel', serif;
+            position: relative;
+            transition: all 0.3s ease;
+            letter-spacing: 0.1em;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: var(--color-scarlet);
+            box-shadow: 0 0 8px var(--color-scarlet);
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: white;
+            text-shadow: 0 0 10px var(--color-scarlet);
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+            left: 0;
+        }
+
+        .btn-energy {
+            background: transparent;
+            border: 1px solid var(--color-scarlet);
+            color: white;
+            padding: 0.75rem 2rem;
+            font-family: 'Cinzel', serif;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 5px var(--color-scarlet);
+        }
+
+        .btn-energy:hover {
+            box-shadow: 0 0 20px var(--color-scarlet);
+            transform: translateY(-2px);
+        }
+
+        /* Loading Overlay */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #050102;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            transition: opacity 1s ease;
+        }
+
+        @keyframes ritual-load {
+            0% {
+                width: 0%;
+                left: 0%;
+            }
+
+            50% {
+                width: 100%;
+                left: 0%;
+            }
+
+            100% {
+                width: 0%;
+                left: 100%;
+            }
+        }
+
+        .hex-loader {
+            width: 200px;
+            height: 2px;
+            background: rgba(255, 41, 66, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hex-loader-bar {
+            position: absolute;
+            height: 100%;
+            background: var(--color-scarlet);
+            box-shadow: 0 0 10px var(--color-scarlet);
+            animation: ritual-load 3s ease-in-out infinite;
+        }
+
+        /* Ambient Motion */
+        .animate-float {
+            animation: float 8s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0px) rotate(0deg);
+            }
+
+            50% {
+                transform: translateY(-10px) rotate(0.5deg);
+            }
+
+            100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0f0f0f;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--color-scarlet);
+            border-radius: 4px;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+
+    <!-- Darkhold Ritual: Page Turn -->
+    <div id="book-ritual">
+        <div class="paper-page" id="ritual-page">
+            <div class="spine-shadow"></div>
+            <span class="rune-glow" id="ritual-rune">᚛</span>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay">
+        <h1 class="text-3xl md:text-5xl text-neon tracking-[0.4em] uppercase font-cinzel opacity-80 text-center mb-8">
+            Inscribing Reality...</h1>
+        <div class="hex-loader">
+            <div class="hex-loader-bar"></div>
+        </div>
+    </div>
+
+    <!-- Backgrounds -->
+    <div id="bg-image"></div>
+    <div id="reality-layer"></div>
+    <canvas id="particle-canvas"></canvas>
+
+    <!-- Navigation -->
+    <nav class="glass-dark sticky top-0 z-50 border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <a href="{% url 'home' %}" class="flex-shrink-0 flex items-center gap-3 group ritual-nav">
+                    <div
+                        class="w-10 h-10 rounded-full border border-scarlet/50 flex items-center justify-center shadow-neon group-hover:scale-110 transition-all duration-500 bg-void/30">
+                        <i class="fa-solid fa-book-sparkles text-scarlet text-lg group-hover:animate-pulse"></i>
+                    </div>
+                    <span
+                        class="text-2xl font-bold tracking-widest uppercase text-white group-hover:text-scarlet transition-all duration-500 font-cinzel">Scarlet
+                        EDA</span>
+                </a>
+
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-8">
+                        <a href="{% url 'upload' %}"
+                            class="ritual-nav nav-link px-3 py-2 text-sm font-bold uppercase">Upload</a>
+                        <a href="{% url 'report' %}"
+                            class="ritual-nav nav-link px-3 py-2 text-sm font-bold uppercase">Report</a>
+                        <a href="{% url 'clean' %}"
+                            class="ritual-nav nav-link px-3 py-2 text-sm font-bold uppercase">Clean</a>
+                        <a href="{% url 'visualize' %}"
+                            class="ritual-nav nav-link px-3 py-2 text-sm font-bold uppercase">Visualize</a>
+                        <a href="{% url 'ai_insights' %}"
+                            class="ritual-nav nav-link px-3 py-2 text-sm font-bold uppercase">Insights</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-10 relative z-10">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="glass-dark border-t border-white/5 mt-auto">
+        <div class="max-w-7xl mx-auto py-10 px-4 text-center">
+            <p class="text-gray-600 text-xs tracking-[0.5em] font-cinzel uppercase">
+                &copy; Chaos Protocol // Scarlet EDA
+            </p>
+        </div>
+    </footer>
+
+    <!-- Ritual Scripts -->
+    <script>
+        // Cinematic Audio Ritual: Realistic Paper Turn
+        const AudioRitual = {
+            ctx: null,
+            init() {
+                if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            },
+            playPaperTurn() {
+                this.init();
+                const duration = 1.0;
+                const bufferSize = this.ctx.sampleRate * duration;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+
+                for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+                const source = this.ctx.createBufferSource();
+                source.buffer = buffer;
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(800, this.ctx.currentTime);
+                filter.frequency.exponentialRampToValueAtTime(400, this.ctx.currentTime + duration);
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.05, this.ctx.currentTime + 0.1);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+
+                source.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                source.start();
+            }
+        };
+
+        const NAV_ORDER = { 'upload': 1, 'report': 2, 'clean': 3, 'visualize': 4, 'ai_insights': 5, 'home': 0 };
+        function getPathKey(path) {
+            const part = path.split('/')[1] || 'home';
+            return part;
+        }
+
+        window.addEventListener('load', () => {
+            const loader = document.getElementById('loading-overlay');
+            setTimeout(() => {
+                loader.style.opacity = '0';
+                setTimeout(() => loader.style.display = 'none', 1000);
+            }, 100);
+        });
+
+        // Physical Book Turn Logic
+        document.querySelectorAll('.ritual-nav').forEach(link => {
+            link.addEventListener('click', (e) => {
+                const targetUrl = new URL(link.href);
+                const currentPath = window.location.pathname;
+                const targetPath = targetUrl.pathname;
+
+                if (currentPath === targetPath) return;
+
+                e.preventDefault();
+                AudioRitual.playPaperTurn();
+
+                const currentIdx = NAV_ORDER[getPathKey(currentPath)] || 0;
+                const targetIdx = NAV_ORDER[getPathKey(targetPath)] || 0;
+
+                const ritualPage = document.getElementById('ritual-page');
+                const ritualRune = document.getElementById('ritual-rune');
+
+                ritualPage.classList.add('active');
+                ritualPage.classList.remove('page-forward', 'page-backward', 'turning-forward', 'turning-backward');
+
+                if (targetIdx >= currentIdx) {
+                    ritualPage.classList.add('page-forward');
+                    ritualRune.innerText = '᚜';
+                    void ritualPage.offsetWidth;
+                    ritualPage.classList.add('turning-forward');
+                } else {
+                    ritualPage.classList.add('page-backward');
+                    ritualRune.innerText = '᚛';
+                    void ritualPage.offsetWidth;
+                    ritualPage.classList.add('turning-backward');
+                }
+
+                setTimeout(() => window.location = link.href, 1000);
+            });
+        });
+
+        // Atmospheric 3D Fragments
+        const realityLayer = document.getElementById('reality-layer');
+        function spawnFragment() {
+            const fragment = document.createElement('i');
+            const icons = ['fa-book', 'fa-feather-pointed', 'fa-scroll', 'fa-eye'];
+            fragment.className = `fa-solid ${icons[Math.floor(Math.random() * icons.length)]} reality-fragment-3d`;
+            fragment.style.left = `${Math.random() * 100}vw`;
+            fragment.style.top = `${Math.random() * 100}vh`;
+            fragment.style.fontSize = `${Math.random() * 15 + 15}px`;
+
+            realityLayer.appendChild(fragment);
+
+            gsap.to(fragment, {
+                z: 300,
+                rotateX: Math.random() * 180,
+                rotateY: Math.random() * 180,
+                duration: 20,
+                opacity: 0,
+                onComplete: () => fragment.remove()
+            });
+        }
+        setInterval(spawnFragment, 5000);
+
+        // Particle System
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width; this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 0.2; this.vy = (Math.random() - 0.5) * 0.2;
+                this.size = Math.random() * 1;
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy;
+                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+            }
+            draw() { ctx.fillStyle = 'rgba(255, 41, 66, 0.1)'; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); }
+        }
+        function initParticles() { for (let i = 0; i < 25; i++) particles.push(new Particle()); }
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update(); particles[i].draw();
+            }
+            requestAnimationFrame(animateParticles);
+        }
+        window.addEventListener('resize', resize);
+        resize(); initParticles(); animateParticles();
+    </script>
+
+    <!-- Global Motion Rituals -->
+    <script>
+        // Micro-Latency Masking & Atmospheric Drift
+        const MotionRitual = {
+            init() {
+                this.setupInputReactivity();
+                this.setupFocusBreathing();
+            },
+            setupInputReactivity() {
+                // Apply soft deformation to buttons and inputs
+                const interactive = document.querySelectorAll('button, input, .btn-energy, .nav-link, .ritual-nav');
+                interactive.forEach(el => {
+                    el.classList.add('reactive-surface');
+                });
+            },
+            setupFocusBreathing() {
+                // Active areas subtly brighten
+                document.addEventListener('focusin', (e) => {
+                    const panel = e.target.closest('.glass-dark');
+                    if (panel) {
+                        panel.style.filter = 'brightness(1.15)';
+                        panel.style.boxShadow = '0 0 30px rgba(255, 41, 66, 0.2)';
+                    }
+                });
+                document.addEventListener('focusout', (e) => {
+                    const panel = e.target.closest('.glass-dark');
+                    if (panel) {
+                        panel.style.filter = '';
+                        panel.style.boxShadow = '';
+                    }
+                });
+            }
+        };
+
+        window.addEventListener('DOMContentLoaded', () => MotionRitual.init());
+
+        // Realistic Ambient Drift for Fragment Layers
+        gsap.to('.reality-fragment-3d', {
+            y: "+=20",
+            x: "+=10",
+            duration: "random(10, 20)",
+            repeat: -1,
+            yoyo: true,
+            ease: "sine.inOut"
+        });
+    </script>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+
+</html>

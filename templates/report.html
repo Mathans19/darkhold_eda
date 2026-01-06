@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Reality Scan: {{ dataset.name }} | Scarlet EDA{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Metric Card Animation */
+    .metric-card {
+        background: linear-gradient(145deg, rgba(20, 20, 20, 0.6), rgba(40, 0, 0, 0.2));
+        border: 1px solid rgba(255, 41, 66, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .metric-card:hover {
+        border-color: var(--color-scarlet);
+        box-shadow: 0 0 20px rgba(255, 41, 66, 0.2);
+        transform: translateY(-4px);
+    }
+
+    /* Table Styling overrides for Pandas output */
+    .dataframe {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        color: #e0e0e0;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.875rem;
+    }
+
+    .dataframe thead th {
+        background-color: rgba(5, 1, 2, 0.9);
+        border-bottom: 2px solid var(--color-scarlet);
+        color: var(--color-scarlet);
+        padding: 1rem;
+        text-align: left;
+        font-family: 'Cinzel', serif;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        backdrop-filter: blur(4px);
+    }
+
+    .dataframe tbody tr {
+        transition: background-color 0.2s;
+    }
+
+    .dataframe tbody tr:hover {
+        background-color: rgba(255, 41, 66, 0.1);
+    }
+
+    .dataframe td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-8 animate__animated animate__fadeIn">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between animate-float">
+        <div>
+            <h1 class="text-4xl font-bold text-white tracking-widest font-cinzel">
+                <span class="text-scarlet mr-2 text-glow">/</span>{{ dataset.name }}
+            </h1>
+            <p class="text-scarlet/60 mt-2 text-sm uppercase tracking-[0.3em] font-medium">Reality Scan Complete</p>
+        </div>
+        <div class="flex gap-4">
+            <a href="{% url 'clean' %}" class="btn-energy text-sm flex items-center gap-2 ritual-nav">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Reshape
+            </a>
+            <a href="{% url 'visualize' %}" class="btn-energy text-sm flex items-center gap-2 ritual-nav">
+                <i class="fa-solid fa-eye"></i> Visualize
+            </a>
+        </div>
+    </div>
+
+    {% if error %}
+    <div class="glass-dark p-8 border border-red-500/50 text-red-200 text-center rounded-xl shadow-neon">
+        <i class="fa-solid fa-triangle-exclamation text-4xl mb-4 animate-bounce"></i>
+        <h3 class="text-xl font-bold mb-2 font-cinzel">Structure Collapse</h3>
+        <p>{{ error }}</p>
+    </div>
+    {% else %}
+
+    <!-- Key Metrics Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Rows -->
+        <div class="metric-card glass-dark p-6 rounded-xl relative overflow-hidden group">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-30 transition-opacity">
+                <i class="fa-solid fa-list-ol text-6xl text-scarlet"></i>
+            </div>
+            <p class="text-scarlet text-xs font-bold uppercase tracking-widest mb-2 font-cinzel">Total Rows</p>
+            <h3 class="text-4xl font-bold text-white counter text-glow" data-target="{{ rows }}">0</h3>
+        </div>
+
+        <!-- Columns -->
+        <div class="metric-card glass-dark p-6 rounded-xl relative overflow-hidden group">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-30 transition-opacity">
+                <i class="fa-solid fa-table-columns text-6xl text-scarlet"></i>
+            </div>
+            <p class="text-scarlet text-xs font-bold uppercase tracking-widest mb-2 font-cinzel">Columns</p>
+            <h3 class="text-4xl font-bold text-white counter text-glow" data-target="{{ columns }}">0</h3>
+        </div>
+
+        <!-- Missing -->
+        <div class="metric-card glass-dark p-6 rounded-xl relative overflow-hidden group">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-30 transition-opacity">
+                <i class="fa-solid fa-eraser text-6xl text-scarlet"></i>
+            </div>
+            <p class="text-scarlet text-xs font-bold uppercase tracking-widest mb-2 font-cinzel">Missing Values</p>
+            <h3 class="text-4xl font-bold text-white counter text-glow" data-target="{{ missing_values }}">0</h3>
+        </div>
+
+        <!-- Duplicates -->
+        <div class="metric-card glass-dark p-6 rounded-xl relative overflow-hidden group">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-30 transition-opacity">
+                <i class="fa-solid fa-clone text-6xl text-scarlet"></i>
+            </div>
+            <p class="text-scarlet text-xs font-bold uppercase tracking-widest mb-2 font-cinzel">Duplicates</p>
+            <h3 class="text-4xl font-bold text-white counter text-glow" data-target="{{ duplicates }}">0</h3>
+        </div>
+    </div>
+
+    <!-- Data Types -->
+    <div class="glass-dark p-6 rounded-xl shadow-void">
+        <h3 class="text-lg font-bold text-white mb-6 border-b border-white/10 pb-4 font-cinzel flex items-center gap-3">
+            <i class="fa-solid fa-dna text-scarlet"></i>
+            Structure Analysis <span class="text-sm text-gray-500 font-normal normal-case ml-2 font-inter">(Data
+                Types)</span>
+        </h3>
+        <div class="flex flex-wrap gap-3">
+            {% for col, dtype in dtypes.items %}
+            <div
+                class="px-4 py-2 bg-void border border-white/10 rounded flex items-center gap-3 hover:border-scarlet transition-colors group">
+                <span class="text-gray-300 font-medium group-hover:text-white">{{ col }}</span>
+                <span
+                    class="px-2 py-0.5 bg-scarlet/10 text-scarlet rounded uppercase text-[10px] tracking-wider font-bold">{{
+                    dtype }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Data Preview (Head) -->
+    <div class="glass-dark rounded-xl overflow-hidden animate__animated animate__fadeInUp border border-white/5"
+        style="animation-delay: 0.1s;">
+        <div class="p-5 border-b border-scarlet/20 flex justify-between items-center bg-black/20">
+            <h3 class="text-lg font-bold text-white font-cinzel flex items-center gap-3">
+                <i class="fa-solid fa-table text-scarlet"></i>
+                Reality Fragment (Head)
+            </h3>
+            <span
+                class="text-xs text-scarlet uppercase tracking-widest font-bold border border-scarlet/30 px-2 py-1 rounded">Read-Only</span>
+        </div>
+        <div class="overflow-x-auto p-0 custom-scrollbar">
+            {{ head|safe }}
+        </div>
+    </div>
+
+    <!-- Statistics (Describe) -->
+    <div class="glass-dark rounded-xl overflow-hidden animate__animated animate__fadeInUp border border-white/5"
+        style="animation-delay: 0.2s;">
+        <div class="p-5 border-b border-scarlet/20 flex justify-between items-center bg-black/20">
+            <h3 class="text-lg font-bold text-white font-cinzel flex items-center gap-3">
+                <i class="fa-solid fa-calculator text-scarlet"></i>
+                Statistical Essence
+            </h3>
+        </div>
+        <div class="overflow-x-auto p-0 custom-scrollbar">
+            {{ describe|safe }}
+        </div>
+    </div>
+
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Counter Animation
+    const counters = document.querySelectorAll('.counter');
+    counters.forEach(counter => {
+        const target = +counter.getAttribute('data-target');
+
+        gsap.to(counter, {
+            innerHTML: target,
+            duration: 2,
+            snap: { innerHTML: 1 },
+            ease: "circ.out"
+        });
+    });
+</script>
+{% endblock %}

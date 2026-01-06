@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+
+{% block title %}Chaos Whispers: {{ dataset.name }} | Scarlet EDA{% endblock %}
+
+{% block extra_head %}
+<style>
+    .chat-container {
+        height: calc(100vh - 200px);
+    }
+
+    .message-bubble {
+        max-width: 85%;
+        padding: 1.25rem;
+        border-radius: 1rem;
+        margin-bottom: 1.5rem;
+        position: relative;
+        animation: fadeIn 0.3s ease-out;
+        font-family: 'Inter', sans-serif;
+        line-height: 1.6;
+    }
+
+    .user-msg {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        margin-left: auto;
+        border-bottom-right-radius: 0.2rem;
+        color: #e5e7eb;
+    }
+
+    .wanda-msg {
+        background: rgba(5, 1, 2, 0.8);
+        border: 1px solid rgba(255, 41, 66, 0.3);
+        margin-right: auto;
+        border-bottom-left-radius: 0.2rem;
+        color: #ffcccc;
+        box-shadow: 0 0 20px rgba(255, 41, 66, 0.1);
+        backdrop-filter: blur(5px);
+    }
+
+    .wanda-msg strong {
+        color: white;
+        font-weight: 700;
+        text-shadow: 0 0 10px rgba(255, 41, 66, 0.3);
+    }
+
+    .wanda-msg ul,
+    .wanda-msg ol {
+        margin-left: 1.5rem;
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .wanda-msg li {
+        margin-bottom: 0.25rem;
+    }
+
+    /* Typing Indicator */
+    .typing-indicator span {
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        background-color: var(--color-scarlet);
+        border-radius: 50%;
+        animation: typing 1.4s infinite both;
+        margin: 0 3px;
+    }
+
+    .typing-indicator span:nth-child(1) {
+        animation-delay: 0s;
+    }
+
+    .typing-indicator span:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .typing-indicator span:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+
+    @keyframes typing {
+
+        0%,
+        80%,
+        100% {
+            transform: scale(0);
+            opacity: 0.5;
+        }
+
+        40% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-140px)] animate__animated animate__fadeIn">
+
+    <!-- Sidebar / Actions -->
+    <div
+        class="lg:col-span-1 glass-dark p-6 rounded-xl flex flex-col gap-6 animate__animated animate__fadeInLeft border border-white/5 shadow-void">
+        <div class="text-center mb-2">
+            <div
+                class="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-void via-black to-scarlet p-1 shadow-[0_0_30px_rgba(255,41,66,0.5)] relative group">
+                <div
+                    class="absolute inset-0 rounded-full bg-scarlet blur-md opacity-20 group-hover:opacity-40 transition-opacity duration-500">
+                </div>
+                <!-- Wanda Avatar/Symbol -->
+                <div
+                    class="w-full h-full rounded-full bg-black flex items-center justify-center overflow-hidden relative z-10 border border-scarlet/30">
+                    <i class="fa-solid fa-hat-wizard text-5xl text-scarlet animate-pulse-slow"></i>
+                </div>
+            </div>
+            <h2 class="text-2xl font-bold text-white mt-6 tracking-widest font-cinzel text-glow">The Scarlet Witch</h2>
+            <p class="text-xs text-scarlet uppercase tracking-[0.3em] mt-2 font-bold">Reality Warper (LLaMA 3)</p>
+        </div>
+
+        <div class="border-t border-scarlet/20 pt-6 space-y-4">
+            <p class="text-xs text-gray-400 uppercase font-bold mb-2 tracking-widest font-cinzel">Quick Invocations</p>
+
+            <button onclick="sendPrompt('Summarize the essence of this dataset.')"
+                class="w-full text-left px-4 py-3 rounded-lg bg-black/30 border border-white/5 hover:border-scarlet/50 hover:bg-scarlet/10 transition-all text-sm text-gray-300 hover:text-white group relative overflow-hidden">
+                <span class="text-scarlet mr-2 group-hover:text-white transition-colors relative z-10"><i
+                        class="fa-solid fa-sparkles"></i></span>
+                <span class="relative z-10">Summarize Dataset</span>
+            </button>
+
+            <button onclick="sendPrompt('Tell me about the missing values and how to fix them.')"
+                class="w-full text-left px-4 py-3 rounded-lg bg-black/30 border border-white/5 hover:border-scarlet/50 hover:bg-scarlet/10 transition-all text-sm text-gray-300 hover:text-white group relative overflow-hidden">
+                <span class="text-scarlet mr-2 group-hover:text-white transition-colors relative z-10"><i
+                        class="fa-solid fa-magnifying-glass-chart"></i></span>
+                <span class="relative z-10">Analyze Missing Data</span>
+            </button>
+
+            <button onclick="sendPrompt('Suggest 3 key visualizations for this data.')"
+                class="w-full text-left px-4 py-3 rounded-lg bg-black/30 border border-white/5 hover:border-scarlet/50 hover:bg-scarlet/10 transition-all text-sm text-gray-300 hover:text-white group relative overflow-hidden">
+                <span class="text-scarlet mr-2 group-hover:text-white transition-colors relative z-10"><i
+                        class="fa-solid fa-lightbulb"></i></span>
+                <span class="relative z-10">Suggest Visuals</span>
+            </button>
+
+            <button onclick="sendPrompt('Find any anomalies or strange patterns.')"
+                class="w-full text-left px-4 py-3 rounded-lg bg-black/30 border border-white/5 hover:border-scarlet/50 hover:bg-scarlet/10 transition-all text-sm text-gray-300 hover:text-white group relative overflow-hidden">
+                <span class="text-scarlet mr-2 group-hover:text-white transition-colors relative z-10"><i
+                        class="fa-solid fa-bug"></i></span>
+                <span class="relative z-10">Detect Anomalies</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Chat Area -->
+    <div
+        class="lg:col-span-3 glass-dark rounded-xl flex flex-col relative overflow-hidden animate__animated animate__fadeInRight border border-white/5 shadow-void">
+        <!-- Magic Header Line -->
+        <div
+            class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent opacity-50">
+        </div>
+
+        <!-- Messages -->
+        <div id="chat-history" class="flex-grow p-8 overflow-y-auto custom-scrollbar flex flex-col scroll-smooth">
+            <!-- Intro Message -->
+            <div class="wanda-msg message-bubble">
+                <div class="flex items-center gap-2 mb-3 border-b border-scarlet/30 pb-2">
+                    <i class="fa-solid fa-hat-wizard text-scarlet"></i>
+                    <span class="text-scarlet font-bold text-xs uppercase tracking-widest font-cinzel">Wanda</span>
+                </div>
+                <p>I have felt the shape of your data. It is... chaotic. But chaos is my specialty. What do you wish to
+                    know about this reality?</p>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="p-6 bg-black/40 border-t border-white/5 relative backdrop-blur-sm">
+            <form id="chat-form" onsubmit="handleSubmit(event)" class="relative">
+                {% csrf_token %}
+                <input type="text" id="user-input"
+                    class="w-full bg-black/60 border border-gray-800 text-white rounded-full py-4 pl-6 pr-16 focus:outline-none focus:border-scarlet focus:ring-1 focus:ring-scarlet transition-all shadow-inner font-inter"
+                    placeholder="Ask the Scarlet Witch..." autocomplete="off">
+
+                <button type="submit"
+                    class="absolute right-2 top-2 bottom-2 w-12 h-12 bg-gradient-to-br from-scarlet to-bg-blood hover:scale-105 rounded-full flex items-center justify-center text-white transition-all shadow-[0_0_15px_rgba(255,41,66,0.5)] group">
+                    <i class="fa-solid fa-wand-sparkles group-hover:rotate-12 transition-transform"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const chatHistory = document.getElementById('chat-history');
+    const chatForm = document.getElementById('chat-form');
+    const userInput = document.getElementById('user-input');
+
+    function scrollToBottom() {
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
+
+    function addMessage(text, sender) {
+        const div = document.createElement('div');
+        div.className = `message-bubble ${sender === 'user' ? 'user-msg' : 'wanda-msg'}`;
+
+        const header = sender === 'wanda'
+            ? `<div class="flex items-center gap-2 mb-3 border-b border-scarlet/30 pb-2"><i class="fa-solid fa-hat-wizard text-scarlet"></i><span class="text-scarlet font-bold text-xs uppercase tracking-widest font-cinzel">Wanda</span></div>`
+            : '';
+
+        // Basic markdown-ish formatting for list items
+        let formattedText = text.replace(/\n-/g, '<br>•').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        formattedText = formattedText.replace(/\n/g, '<br>');
+
+        div.innerHTML = `${header}<div>${formattedText}</div>`;
+        chatHistory.appendChild(div);
+        scrollToBottom();
+    }
+
+    function addLoading() {
+        const div = document.createElement('div');
+        div.id = 'loading-indicator';
+        div.className = 'wanda-msg message-bubble w-24';
+        div.innerHTML = `
+            <div class="typing-indicator flex items-center justify-center h-4">
+                <span></span><span></span><span></span>
+            </div>
+        `;
+        chatHistory.appendChild(div);
+        scrollToBottom();
+    }
+
+    function removeLoading() {
+        const loading = document.getElementById('loading-indicator');
+        if (loading) loading.remove();
+    }
+
+    async function sendPrompt(text) {
+        if (!text.trim()) return;
+
+        // Add user message
+        addMessage(text, 'user');
+
+        // Clear input if came from input field
+        userInput.value = '';
+        userInput.disabled = true;
+
+        // Show loading
+        addLoading();
+
+        try {
+            const formData = new FormData();
+            formData.append('message', text);
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+            const response = await fetch('', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            const data = await response.json();
+            removeLoading();
+
+            if (data.error) {
+                addMessage("Something interfered with the spell: " + data.error, 'wanda');
+            } else {
+                addMessage(data.reply, 'wanda');
+            }
+
+        } catch (e) {
+            removeLoading();
+            addMessage("Connection to the multiverse severed.", 'wanda');
+        } finally {
+            userInput.disabled = false;
+            userInput.focus();
+        }
+    }
+
+    function handleSubmit(e) {
+        e.preventDefault();
+        sendPrompt(userInput.value);
+    }
+</script>
+{% endblock %}

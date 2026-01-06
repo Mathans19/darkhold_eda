@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+
+{% block title %}Upload Data | Scarlet EDA{% endblock %}
+
+{% block extra_head %}
+<style>
+    .upload-zone {
+        background: rgba(20, 20, 20, 0.4);
+        border: 2px dashed rgba(255, 36, 36, 0.3);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .upload-zone:hover,
+    .upload-zone.drag-active {
+        background: rgba(255, 36, 36, 0.05);
+        border-color: var(--scarlet-primary);
+        box-shadow: 0 0 30px rgba(255, 36, 36, 0.2), inset 0 0 20px rgba(255, 36, 36, 0.1);
+    }
+
+    .upload-zone::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255, 36, 36, 0.1) 0%, transparent 60%);
+        animation: rotate 10s linear infinite;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+        pointer-events: none;
+    }
+
+    .upload-zone:hover::before,
+    .upload-zone.drag-active::before {
+        opacity: 1;
+    }
+
+    @keyframes rotate {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .chaos-border {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 10;
+        border: 1px solid transparent;
+        mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+        -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+        mask-composite: exclude;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-8 animate__animated animate__fadeIn">
+
+    <!-- Hero Text -->
+    <div class="text-center space-y-4 mb-12 animate-float">
+        <h1 class="text-5xl md:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-white to-scarlet drop-shadow-[0_0_15px_rgba(255,41,66,0.5)] leading-tight tracking-wider"
+            style="font-family: 'Cinzel', serif;">
+            Manifest Reality
+        </h1>
+        <p class="text-gray-400 text-lg max-w-2xl mx-auto font-inter tracking-wide">
+            Upload your dataset. Let the <span class="text-neon">chaos magic</span> reveal hidden patterns in the void.
+        </p>
+    </div>
+
+    <!-- Upload Area -->
+    <div class="glass-dark p-1 rounded-2xl relative group">
+        <!-- Magic Glow Border Effect -->
+        <div
+            class="absolute -inset-0.5 bg-gradient-to-r from-red-600 to-red-900 rounded-2xl opacity-20 blur group-hover:opacity-60 transition duration-1000 group-hover:duration-200">
+        </div>
+
+        <form method="post" enctype="multipart/form-data" id="upload-form"
+            class="relative bg-black/60 rounded-xl h-80 flex flex-col items-center justify-center cursor-pointer upload-zone backdrop-blur-md">
+            {% csrf_token %}
+            <input type="file" name="file" id="file-input" class="hidden" accept=".csv,.xlsx,.xls,.json">
+
+            <div class="z-20 flex flex-col items-center space-y-6">
+                <!-- Icon -->
+                <div
+                    class="w-24 h-24 rounded-full bg-void border border-scarlet flex items-center justify-center shadow-neon group-hover:scale-110 transition-transform duration-500">
+                    <i class="fa-solid fa-cloud-bolt text-4xl text-scarlet group-hover:animate-pulse"></i>
+                </div>
+
+                <div class="text-center space-y-2">
+                    <p class="text-2xl font-cinzel text-white tracking-widest uppercase">Drag & Drop</p>
+                    <p class="text-sm text-red-400/60 font-inter">CSV, Excel, JSON</p>
+                </div>
+            </div>
+
+            <!-- Scanning Line Animation -->
+            <div id="scan-line"
+                class="absolute top-0 left-0 w-full h-1 bg-scarlet shadow-[0_0_15px_#ff2942] opacity-0 transition-opacity duration-300">
+            </div>
+
+            <!-- Uploading Spinner -->
+            <div id="upload-status"
+                class="absolute inset-0 bg-void/90 backdrop-blur-sm z-30 flex flex-col items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+                <div class="relative">
+                    <div class="w-20 h-20 border-t-2 border-b-2 border-scarlet rounded-full animate-spin"></div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <i class="fa-solid fa-chaos text-scarlet animate-pulse"></i>
+                    </div>
+                </div>
+                <p class="text-scarlet tracking-widest uppercase text-sm font-bold mt-4 animate-pulse">Warping
+                    Reality...</p>
+            </div>
+        </form>
+    </div>
+
+    <!-- Recent Uploads -->
+    <div class="mt-16">
+        <h3 class="text-white/60 uppercase tracking-[0.2em] text-sm font-semibold mb-6 flex items-center gap-3">
+            <span class="w-2 h-2 bg-scarlet rounded-full shadow-neon"></span>
+            Recent Interactions
+        </h3>
+        <div class="grid gap-4">
+            {% for dataset in recent_uploads %}
+            <div
+                class="glass-dark p-5 rounded-lg flex items-center justify-between hover:bg-white/5 transition duration-300 group border-l-2 border-transparent hover:border-l-scarlet">
+                <div class="flex items-center gap-5">
+                    <div
+                        class="w-12 h-12 rounded bg-void/50 border border-white/10 flex items-center justify-center text-scarlet shadow-[0_0_10px_rgba(255,41,66,0.1)]">
+                        <i class="fa-solid fa-database text-lg"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-white font-cinzel tracking-wider group-hover:text-scarlet transition-colors">{{
+                            dataset.name }}</h4>
+                        <p class="text-xs text-gray-500 font-mono mt-1">{{ dataset.uploaded_at|date:"M d, Y • H:i" }}
+                        </p>
+                    </div>
+                </div>
+                <button class="btn-energy text-xs py-2 px-4">
+                    Load
+                </button>
+            </div>
+            {% empty %}
+            <div class="text-center py-12 glass-dark rounded-lg">
+                <p class="text-gray-500 italic font-cinzel">No recent distortions found in the timeline.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+    const dropZone = document.getElementById('upload-form');
+    const fileInput = document.getElementById('file-input');
+    const scanLine = document.getElementById('scan-line');
+    const uploadStatus = document.getElementById('upload-status');
+
+    // Drag & Drop Events
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, unhighlight, false);
+    });
+
+    function highlight(e) {
+        dropZone.classList.add('drag-active');
+    }
+
+    function unhighlight(e) {
+        dropZone.classList.remove('drag-active');
+    }
+
+    dropZone.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        handleFiles(files);
+    }
+
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', function () {
+        handleFiles(this.files);
+    });
+
+    function handleFiles(files) {
+        if (files.length > 0) {
+            const file = files[0];
+            uploadFile(file);
+        }
+    }
+
+    function uploadFile(file) {
+        // Show scanning animation
+        scanLine.style.opacity = '1';
+        gsap.to(scanLine, { top: '100%', duration: 1.5, repeat: -1, ease: 'linear' });
+
+        // Show status overlay
+        uploadStatus.style.opacity = '1';
+        uploadStatus.style.pointerEvents = 'auto';
+
+        // Submit form
+        dropZone.submit();
+    }
+</script>
+{% endblock %}

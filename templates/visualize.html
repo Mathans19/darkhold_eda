@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+
+{% block title %}Visual Reality: {{ dataset.name }} | Scarlet EDA{% endblock %}
+
+{% block extra_head %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .option-btn {
+        transition: all 0.3s ease;
+    }
+
+    .option-btn.active {
+        background-color: transparent;
+        border-color: var(--color-scarlet);
+        color: var(--color-scarlet);
+        box-shadow: 0 0 15px rgba(255, 41, 66, 0.4);
+    }
+
+    .option-btn:hover:not(.active) {
+        border-color: rgba(255, 41, 66, 0.5);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100vh-140px)] animate__animated animate__fadeIn">
+
+    <!-- Control Panel -->
+    <div
+        class="lg:col-span-4 glass-dark p-6 rounded-xl flex flex-col gap-8 overflow-y-auto custom-scrollbar border border-white/5 shadow-void">
+        <h2 class="text-xl font-bold text-white flex items-center gap-3 font-cinzel border-b border-white/10 pb-4">
+            <i class="fa-solid fa-compass-drafting text-scarlet animate-pulse"></i>
+            Reality Builder
+        </h2>
+
+        <!-- Chart Type -->
+        <div class="space-y-3">
+            <label class="text-xs uppercase text-gray-500 font-bold tracking-[0.2em] block">Manifestation Form</label>
+            <div class="grid grid-cols-4 gap-3">
+                <button onclick="selectType('bar', this)"
+                    class="option-btn active p-3 rounded bg-black/40 border border-white/10 flex justify-center text-gray-400"
+                    title="Bar">
+                    <i class="fa-solid fa-chart-bar text-xl"></i>
+                </button>
+                <button onclick="selectType('line', this)"
+                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex justify-center text-gray-400"
+                    title="Line">
+                    <i class="fa-solid fa-chart-line text-xl"></i>
+                </button>
+                <button onclick="selectType('scatter', this)"
+                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex justify-center text-gray-400"
+                    title="Scatter">
+                    <i class="fa-solid fa-braille text-xl"></i>
+                </button>
+                <button onclick="selectType('pie', this)"
+                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex justify-center text-gray-400"
+                    title="Pie">
+                    <i class="fa-solid fa-chart-pie text-xl"></i>
+                </button>
+                <button onclick="selectType('histogram', this)"
+                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex justify-center text-gray-400"
+                    title="Histogram">
+                    <i class="fa-solid fa-chart-column text-xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Axes Selection -->
+        <div class="space-y-6">
+            <div>
+                <label class="text-xs uppercase text-gray-500 font-bold tracking-[0.2em] mb-2 block">X-Axis (Chaos
+                    Dimension)</label>
+                <div class="relative">
+                    <select id="x-axis"
+                        class="w-full bg-black/50 border border-gray-700 rounded p-3 text-white focus:border-scarlet outline-none font-inter appearance-none">
+                        <option value="">Select Dimension...</option>
+                        {% for col in columns %}<option value="{{ col }}">{{ col }}</option>{% endfor %}
+                    </select>
+                    <i class="fa-solid fa-chevron-down absolute right-3 top-3.5 text-gray-500 pointer-events-none"></i>
+                </div>
+            </div>
+
+            <div id="y-axis-group">
+                <label class="text-xs uppercase text-gray-500 font-bold tracking-[0.2em] mb-2 block">Y-Axis (Order
+                    Dimension)</label>
+                <div class="relative">
+                    <select id="y-axis"
+                        class="w-full bg-black/50 border border-gray-700 rounded p-3 text-white focus:border-scarlet outline-none font-inter appearance-none">
+                        <option value="">Select Dimension...</option>
+                        {% for col in numerical_cols %}<option value="{{ col }}">{{ col }}</option>{% endfor %}
+                    </select>
+                    <i class="fa-solid fa-chevron-down absolute right-3 top-3.5 text-gray-500 pointer-events-none"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action -->
+        <button onclick="renderChart()"
+            class="btn-energy mt-auto w-full flex items-center justify-center gap-2 font-bold py-4 text-base tracking-widest">
+            <i class="fa-solid fa-bolt"></i> Manifest Visualization
+        </button>
+    </div>
+
+    <!-- Chart Display -->
+    <div
+        class="lg:col-span-8 glass-dark p-6 rounded-xl relative flex items-center justify-center animate__animated animate__fadeInRight border border-white/5 shadow-void">
+
+        <!-- Magic Corner Accents -->
+        <div class="absolute top-0 right-0 w-16 h-16 border-t-2 border-r-2 border-scarlet/30 rounded-tr-xl"></div>
+        <div class="absolute bottom-0 left-0 w-16 h-16 border-b-2 border-l-2 border-scarlet/30 rounded-bl-xl"></div>
+
+        <!-- Placeholder/Loading -->
+        <div id="chart-placeholder" class="text-center space-y-6">
+            <div
+                class="w-24 h-24 rounded-full border border-scarlet/20 flex items-center justify-center mx-auto relative">
+                <div class="absolute inset-0 rounded-full border-t-2 border-scarlet animate-spin"></div>
+                <i class="fa-solid fa-chart-area text-4xl text-scarlet/50"></i>
+            </div>
+            <div>
+                <h3 class="text-xl font-cinzel text-white mb-2">Void Canvas</h3>
+                <p class="text-gray-500 tracking-wider font-inter text-sm">Select dimensions to collapse the wave
+                    function.</p>
+            </div>
+        </div>
+
+        <canvas id="canvas" class="hidden w-full h-full p-4"></canvas>
+    </div>
+</div>
+
+<script>
+    let currentChart = null;
+    let chartType = 'bar';
+
+    // Chart.js Global Defaults
+    Chart.defaults.color = '#a0a0a0';
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.05)';
+
+    function selectType(type, btn) {
+        chartType = type;
+
+        // UI Update
+        document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        // Logic
+        const yAxisGroup = document.getElementById('y-axis-group');
+        if (type === 'histogram' || type === 'pie') {
+            yAxisGroup.style.display = 'none'; // Hist/Pie only needs X usually (Frequency calc)
+        } else {
+            yAxisGroup.style.display = 'block';
+        }
+    }
+
+    async function renderChart() {
+        const xVal = document.getElementById('x-axis').value;
+        const yVal = document.getElementById('y-axis').value;
+
+        if (!xVal) {
+            alert("Define the primary dimension (X-Axis).");
+            return;
+        }
+
+        const btn = document.querySelector('button[onclick="renderChart()"]');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Materializing...';
+        btn.disabled = true;
+
+        try {
+            const response = await fetch(`?type=${chartType}&x=${xVal}&y=${yVal}`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            const data = await response.json();
+
+            if (data.error) throw new Error(data.error);
+
+            // Destroy old chart
+            if (currentChart) currentChart.destroy();
+
+            // Hide placeholder, show canvas
+            document.getElementById('chart-placeholder').classList.add('hidden');
+            const canvas = document.getElementById('canvas');
+            canvas.classList.remove('hidden');
+
+            const ctx = canvas.getContext('2d');
+
+            // Scarlet Gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(255, 41, 66, 0.6)');
+            gradient.addColorStop(1, 'rgba(255, 41, 66, 0.05)');
+
+            // Create Chart
+            currentChart = new Chart(ctx, {
+                type: chartType === 'histogram' ? 'bar' : chartType,
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: chartType === 'histogram' ? 'Frequency' : yVal || 'Count',
+                        data: data.values,
+                        backgroundColor: chartType === 'line' ? 'transparent' : gradient,
+                        borderColor: '#ff2942',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#000',
+                        pointBorderColor: '#ff2942',
+                        pointHoverBackgroundColor: '#ff2942',
+                        pointHoverBorderColor: '#fff',
+                        tension: 0.4, // smooth curves
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#e0e0e0',
+                                font: { family: 'Cinzel', size: 12 }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(5, 1, 2, 0.9)',
+                            titleColor: '#ff2942',
+                            titleFont: { family: 'Cinzel' },
+                            bodyColor: '#fff',
+                            borderColor: 'rgba(255, 41, 66, 0.3)',
+                            borderWidth: 1,
+                            padding: 10,
+                            displayColors: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: '#9ca3af' }
+                        },
+                        x: {
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: '#9ca3af' }
+                        }
+                    },
+                    animation: {
+                        duration: 1500,
+                        easing: 'easeOutQuart'
+                    }
+                }
+            });
+
+        } catch (e) {
+            alert("Visualization Collapse: " + e.message);
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+</script>
+{% endblock %}

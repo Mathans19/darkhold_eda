@@ -1,0 +1,268 @@
+{% extends 'base.html' %}
+{% block title %}Reshape Reality: {{ dataset.name }} | Scarlet EDA{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Table specific overrides for glass look */
+    .dataframe {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        color: #e0e0e0;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.875rem;
+    }
+
+    .dataframe thead {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+    }
+
+    .dataframe thead th {
+        background-color: rgba(5, 1, 2, 0.95);
+        color: var(--color-scarlet);
+        border-bottom: 2px solid var(--color-scarlet);
+        padding: 1rem;
+        text-align: left;
+        font-family: 'Cinzel', serif;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        white-space: nowrap;
+        backdrop-filter: blur(4px);
+    }
+
+    .dataframe tbody tr {
+        transition: background-color 0.2s;
+    }
+
+    .dataframe tbody tr:hover {
+        background-color: rgba(255, 41, 66, 0.1);
+    }
+
+    .dataframe td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* Modal Animation */
+    .modal-enter {
+        animation: modalIn 0.3s ease-out forwards;
+    }
+
+    .modal-exit {
+        animation: modalOut 0.3s ease-in forwards;
+    }
+
+    @keyframes modalIn {
+        from {
+            opacity: 0;
+            transform: scale(0.95) translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+    }
+
+    @keyframes modalOut {
+        from {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+
+        to {
+            opacity: 0;
+            transform: scale(0.95) translateY(20px);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="h-[calc(100vh-140px)] flex flex-col animate__animated animate__fadeIn">
+
+    <!-- Toolbar -->
+    <div class="glass-dark p-4 rounded-xl mb-6 flex flex-wrap items-center gap-4 sticky top-0 z-30 shadow-neon">
+        <h2 class="text-xl font-bold text-white mr-4 flex items-center gap-3">
+            <i class="fa-solid fa-wand-magic-sparkles text-scarlet animate-pulse"></i>
+            <span style="font-family: 'Cinzel', serif;">Transformation Studio</span>
+        </h2>
+
+        <div class="h-8 w-px bg-white/10 mx-2"></div>
+
+        <!-- Action Buttons -->
+        <button onclick="openModal('rename-modal')" class="btn-energy text-sm px-4 py-2 flex items-center gap-2">
+            <i class="fa-solid fa-pen-to-square"></i> Rename
+        </button>
+
+        <button onclick="openModal('drop-modal')" class="btn-energy text-sm px-4 py-2 flex items-center gap-2">
+            <i class="fa-solid fa-trash-can"></i> Drop
+        </button>
+
+        <button onclick="openModal('fill-modal')" class="btn-energy text-sm px-4 py-2 flex items-center gap-2">
+            <i class="fa-solid fa-fill-drip"></i> Fill Void
+        </button>
+
+        <form method="post" class="inline">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="drop_duplicates">
+            <button type="submit" class="btn-energy text-sm px-4 py-2 flex items-center gap-2"
+                onclick="return confirm('Prune timelines (remove duplicates)? This cannot be undone.')">
+                <i class="fa-solid fa-clone"></i> Purge Duplicates
+            </button>
+        </form>
+
+        <div class="ml-auto text-xs text-gray-500 uppercase tracking-wider font-cinzel">
+            Viewing <span class="text-scarlet font-bold">{{ total_rows }}</span> Timelines
+        </div>
+    </div>
+
+    <!-- Data Table Container -->
+    <div class="flex-grow overflow-auto glass-dark rounded-xl custom-scrollbar relative border border-white/5">
+        {% if error %}
+        <div class="p-12 text-center text-red-400">
+            <i class="fa-solid fa-triangle-exclamation text-4xl mb-4 animate-bounce"></i>
+            <h3 class="text-xl font-cinzel font-bold mb-2">Reality Distortion Error</h3>
+            <p>{{ error }}</p>
+        </div>
+        {% else %}
+        {{ table|safe }}
+        {% endif %}
+    </div>
+</div>
+
+<!-- Reused Modal Structure -->
+
+
+<!-- Rename Modal -->
+<div id="rename-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
+    <div
+        class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
+        </div>
+        <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Rename Reality
+        </h3>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="rename_col">
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Target
+                        Column</label>
+                    <select name="old_name"
+                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                        {% for col in columns %}
+                        <option value="{{ col }}">{{ col }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">New
+                        Designation</label>
+                    <input type="text" name="new_name"
+                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter"
+                        required placeholder="Enter new name...">
+                </div>
+            </div>
+            <div class="mt-8 flex justify-end gap-4">
+                <button type="button" onclick="closeModal('rename-modal')"
+                    class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
+                <button type="submit" class="btn-energy text-sm px-6 py-2">Manifest</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Drop Modal -->
+<div id="drop-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
+    <div
+        class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
+        </div>
+        <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Erase from
+            Existence</h3>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="drop_col">
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Column to
+                        Drop</label>
+                    <select name="column"
+                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                        {% for col in columns %}
+                        <option value="{{ col }}">{{ col }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="mt-8 flex justify-end gap-4">
+                <button type="button" onclick="closeModal('drop-modal')"
+                    class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
+                <button type="submit" class="btn-energy text-sm px-6 py-2">Erase</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Fill NA Modal -->
+<div id="fill-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
+    <div
+        class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
+        </div>
+        <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Fill the Void
+        </h3>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="fill_na">
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Target
+                        Column</label>
+                    <select name="column"
+                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                        {% for col in columns %}
+                        <option value="{{ col }}">{{ col }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Method</label>
+                    <select name="method"
+                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                        <option value="mean">Mean (Average)</option>
+                        <option value="median">Median (Middle)</option>
+                        <option value="mode">Mode (Most Frequent)</option>
+                        <option value="drop">Drop Rows (Purge)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mt-8 flex justify-end gap-4">
+                <button type="button" onclick="closeModal('fill-modal')"
+                    class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
+                <button type="submit" class="btn-energy text-sm px-6 py-2">Fill</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openModal(id) {
+        document.getElementById(id).classList.remove('hidden');
+        document.getElementById(id).children[0].classList.remove('modal-exit');
+        document.getElementById(id).children[0].classList.add('modal-enter');
+    }
+
+    function closeModal(id) {
+        const modalContent = document.getElementById(id).children[0];
+        modalContent.classList.remove('modal-enter');
+        modalContent.classList.add('modal-exit');
+        setTimeout(() => {
+            document.getElementById(id).classList.add('hidden');
+        }, 300);
+    }
+</script>
+{% endblock %}
