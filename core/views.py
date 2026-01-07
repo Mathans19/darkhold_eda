@@ -1,10 +1,75 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.http import JsonResponse
+from django.conf import settings
 from .models import Dataset
+import pandas as pd
+import os
+import requests
+import json
 
 def home(request):
     """Redirects to the upload page."""
     return redirect('upload')
+
+def calculate_chaos_score(df):
+    """Calculates a chaos score from 0-100 (Higher = Messier)."""
+    if df.empty: return 0
+    
+    # 1. Missing Values (Up to 40 points)
+    missing_pct = df.isnull().sum().sum() / (df.size or 1)
+    missing_score = min(missing_pct * 100 * 2, 40)
+    
+    # 2. Duplicate Rows (Up to 20 points)
+    dup_pct = df.duplicated().sum() / len(df)
+    dup_score = min(dup_pct * 100 * 2, 20)
+    
+    # 3. High Cardinality / Messy Columns (Up to 20 points)
+    # Check for columns that look like IDs but are 'object'
+    messy_cols = 0
+    for col in df.columns:
+        if df[col].dtype == 'object' and df[col].nunique() > len(df) * 0.9:
+            messy_cols += 1
+    cardinality_score = min((messy_cols / len(df.columns)) * 100, 20)
+    
+    # 4. Outliers (Placeholder - Up to 20 points)
+    # Just a rough check on numeric skewness for now
+    numeric_df = df.select_dtypes(include=['number'])
+    outlier_score = 0
+    if not numeric_df.empty:
+        skew = numeric_df.skew().abs().mean()
+        outlier_score = min(skew * 5, 20)
+        
+    return int(min(missing_score + dup_score + cardinality_score + outlier_score, 100))
+
+def get_groq_completion(prompt):
+    """Calls the Groq API using requests."""
+    api_key = getattr(settings, 'GROQ_API_KEY', '')
+    if not api_key:
+        return None
+    
+    url = "https://api.groq.com/openai/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "model": "llama-3.1-8b-instant",
+        "messages": [
+            {"role": "system", "content": "You are Wanda Maximoff, the Scarlet Witch. You are an expert data scientist who uses chaos magic to clean data. Your tone is mystical, elegant, and slightly dark. Provide actionable data cleaning advice in HTML format (use <div>, <b>, <p> tags). Keep it concise."},
+            {"role": "user", "content": prompt}
+        ],
+        "temperature": 0.5,
+        "max_tokens": 1000
+    }
+    
+    try:
+        response = requests.post(url, headers=headers, json=data, timeout=10)
+        response.raise_for_status()
+        return response.json()['choices'][0]['message']['content']
+    except Exception as e:
+        print(f"Groq API Error: {e}")
+        return None
 
 def clear_session(request):
     """Clears the session - useful for testing navigation restrictions."""
@@ -17,14 +82,25 @@ def upload_file(request):
     if request.method == 'POST' and request.FILES.get('file'):
         uploaded_file = request.FILES['file']
         alias = request.POST.get('alias', '').strip()
+        
+        # Save temporary for analysis
         dataset = Dataset.objects.create(
             file=uploaded_file, 
             name=alias or uploaded_file.name
         )
         
+        try:
+            # Analyze metadata
+            df = pd.read_csv(dataset.file.path) if dataset.file.path.endswith('.csv') else pd.read_excel(dataset.file.path)
+            dataset.total_rows = len(df)
+            dataset.total_cols = len(df.columns)
+            dataset.chaos_score = calculate_chaos_score(df)
+            dataset.save()
+        except:
+            pass # Fallback to defaults
+            
         # Store dataset ID in session for downstream pages
         request.session['dataset_id'] = dataset.id
-        
         return redirect('report')
     
     # Handle direct load from recent interactions
@@ -37,8 +113,9 @@ def upload_file(request):
         except Dataset.DoesNotExist:
             pass
 
-    recent_uploads = Dataset.objects.order_by('-uploaded_at')[:5]
-    return render(request, 'upload.html', {'recent_uploads': recent_uploads})
+    # Hall of Records: Load all history
+    history = Dataset.objects.order_by('-uploaded_at')
+    return render(request, 'upload.html', {'history': history})
 
 import pandas as pd
 import os
@@ -230,7 +307,41 @@ def clean_data(request):
     if request.method == 'POST':
         action = request.POST.get('action')
         
+        # AJAX Handler for Guidance
+        if action == 'get_guidance':
+            cols_info = df.dtypes.to_dict()
+            missing_info = df.isnull().sum().to_dict()
+            prompt = f"Dataset sample:\n{df.head(5).to_csv()}\nColumns: {cols_info}\nMissing Values: {missing_info}\nSuggest 3 specific rituals (cleaning steps) to restore balance to this reality. Use scarlet-themed metaphors."
+            guidance_html = get_groq_completion(prompt)
+            if guidance_html:
+                return JsonResponse({'status': 'success', 'html': guidance_html})
+            return JsonResponse({'status': 'error', 'message': 'The void is silent.'})
+
         try:
+            if action == 'auto_ritual':
+                save_checkpoint(df)
+                # 1. Automagical Cleaning
+                # Strip strings
+                for col in df.select_dtypes(include=['object']).columns:
+                    df[col] = df[col].astype(str).str.strip()
+                
+                # Fill numeric with median, categorical with mode
+                for col in df.columns:
+                    if df[col].isnull().any():
+                        if pd.api.types.is_numeric_dtype(df[col]):
+                            df[col].fillna(df[col].median(), inplace=True)
+                        else:
+                            df[col].fillna(df[col].mode()[0], inplace=True)
+                
+                # Drop duplicates
+                df.drop_duplicates(inplace=True)
+                
+                # Recalculate chaos and save
+                dataset.chaos_score = calculate_chaos_score(df)
+                dataset.save()
+                save_df(df, file_path)
+                messages.success(request, "The reality has been stabilized by the Auto-Ritual.")
+                return redirect('clean')
             if action == 'undo':
                 undo, redo = get_history_stacks()
                 if undo:
@@ -412,11 +523,52 @@ def clean_data(request):
                     except:
                         pass
             
-            save_df(df, file_path)
+            # Recalculate Chaos Score after any ritual
+            if action not in ['undo', 'redo', 'get_guidance']:
+                save_df(df, file_path)
+                dataset.chaos_score = calculate_chaos_score(df)
+                dataset.total_rows = len(df)
+                dataset.total_cols = len(df.columns)
+                dataset.save()
+            
             return redirect('clean')
             
         except Exception as e:
-            error = str(e) # Pass error to context if needed
+            messages.error(request, f"Reality distortion: {str(e)}")
+            return redirect('clean')
+
+    # GET request - check if guidance is requested
+    if request.GET.get('action') == 'get_guidance':
+        cols_info = df.dtypes.astype(str).to_dict()
+        missing_info = df.isnull().sum().to_dict()
+        
+        system_instruction = """
+        You are Wanda Maximoff, the Scarlet Witch. You guide the user in cleaning their data using the provided app tools.
+        DO NOT provide Python code. Provide 3 specific, actionable suggestions based on the data analysis.
+        For each suggestion, include a button that opens the relevant tool in the app.
+        
+        Available Tools & Actions (use exactly this HTML for buttons):
+        - To clean text: <button onclick="openModal('clean-text-modal')" class="btn-energy text-[10px] px-2 py-1 mt-2">Clean Text</button>
+        - To fill missing: <button onclick="openModal('fill-modal')" class="btn-energy text-[10px] px-2 py-1 mt-2">Fill Missing</button>
+        - To drop columns: <button onclick="openModal('drop-modal')" class="btn-energy text-[10px] px-2 py-1 mt-2">Drop Columns</button>
+        - To remove outliers: <button onclick="openModal('outliers-modal')" class="btn-energy text-[10px] px-2 py-1 mt-2">Handle Outliers</button>
+        - To extract dates: <button onclick="openModal('datetime-extract-modal')" class="btn-energy text-[10px] px-2 py-1 mt-2">Extract Dates</button>
+        - To filter rows: <button onclick="openModal('filter-rows-modal')" class="btn-energy text-[10px] px-2 py-1 mt-2">Filter Data</button>
+        
+        Format each suggestion as a div block:
+        <div class="p-4 bg-white/5 border border-white/10 rounded-lg mb-4 hover:border-scarlet/30 transition-all">
+            <h4 class="text-scarlet font-cinzel text-sm font-bold mb-1">Title</h4>
+            <p class="text-gray-400 text-xs mb-2">Mystical explanation...</p>
+            [Button Code Here]
+        </div>
+        """
+        
+        prompt = f"System: {system_instruction}\n\nUser Data Context:\nColumns: {cols_info}\nMissing Values: {missing_info}\nSample: {df.head(3).to_dict()}"
+        
+        guidance_html = get_groq_completion(prompt)
+        if guidance_html:
+            return JsonResponse({'status': 'success', 'html': guidance_html})
+        return JsonResponse({'status': 'error', 'message': 'The void is silent.'})
 
     # Prepare context
     context = {

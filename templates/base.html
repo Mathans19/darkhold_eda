@@ -654,8 +654,7 @@
                         </svg>
                     </div>
                     <span id="scarlet-text"
-                        class="text-2xl font-bold tracking-widest uppercase text-white font-cinzel">Scarlet
-                        EDA</span>
+                        class="text-2xl font-bold tracking-widest uppercase text-white font-cinzel">Scarlet EDA</span>
                 </div>
 
                 <div class="hidden md:block">
@@ -956,13 +955,9 @@
     </script>
 
     <script>
-        // Slide Scarlet EDA to the left on page load
+        // Animations removed for static branding, keeping Glitch effect below
         const brand = document.getElementById("brand-container");
-        window.addEventListener("load", () => {
-            setTimeout(() => {
-                brand.classList.add("move-left");
-            }, 300);
-        });
+
         // WandaVision Hex Glitch Effect - Every 6 seconds (TRUE TEXT GLITCH)
         const scarletText = document.getElementById("scarlet-text");
         const originalText = "SCARLET EDA";

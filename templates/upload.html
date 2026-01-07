@@ -156,41 +156,95 @@
         </div>
     </form>
 
-    <!-- Recent Uploads -->
+    <!-- Hall of Records (Dashboard) -->
     <div class="mt-20">
-        <h3 class="text-white/60 uppercase tracking-[0.3em] text-xs font-bold mb-8 flex items-center gap-4">
-            <span class="w-8 h-px bg-scarlet/30"></span>
-            Recent Interactions
-            <span class="flex-grow h-px bg-white/5"></span>
+        <h3 class="text-white/60 uppercase tracking-[0.3em] text-sm font-bold mb-8 flex items-center gap-4">
+            <span class="w-12 h-px bg-scarlet/50"></span>
+            Hall of Records
+            <span class="flex-grow h-px bg-white/10"></span>
         </h3>
 
-        <div class="grid gap-4">
-            {% for dataset in recent_uploads %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for dataset in history %}
             <div
-                class="glass-dark p-6 rounded-xl flex items-center justify-between hover:bg-white/5 transition duration-500 group border border-white/5 hover:border-scarlet/30">
-                <div class="flex items-center gap-6">
-                    <div
-                        class="w-14 h-14 rounded-lg bg-void/80 border border-white/5 flex items-center justify-center text-scarlet shadow-void group-hover:shadow-neon transition-all duration-500">
-                        <i class="fa-solid fa-database text-xl"></i>
+                class="glass-dark p-6 rounded-2xl border border-white/5 hover:border-scarlet/30 transition-all duration-500 group relative overflow-hidden flex flex-col justify-between h-full">
+                <!-- Chaos Background Aura -->
+                <div
+                    class="absolute -top-10 -right-10 w-32 h-32 bg-scarlet/5 rounded-full blur-3xl group-hover:bg-scarlet/10 transition-colors">
+                </div>
+
+                <div class="relative z-10">
+                    <div class="flex justify-between items-start mb-4">
+                        <div
+                            class="w-12 h-12 rounded-xl bg-void/80 border border-white/10 flex items-center justify-center text-scarlet shadow-void group-hover:shadow-neon transition-all duration-500">
+                            <i class="fa-solid fa-scroll text-lg"></i>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-[10px] text-gray-500 uppercase tracking-widest mb-1">{{
+                                dataset.uploaded_at|date:"M d, Y" }}</div>
+                            <div
+                                class="text-[9px] text-scarlet px-2 py-0.5 rounded-full bg-scarlet/10 border border-scarlet/20 inline-block uppercase">
+                                Fragment #{{ dataset.id }}
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <h4
-                            class="text-lg font-cinzel text-white tracking-wide group-hover:text-scarlet transition-colors">
-                            {{ dataset.name }}
-                        </h4>
-                        <p class="text-[10px] text-gray-500 uppercase tracking-widest mt-1 font-inter">
-                            {{ dataset.uploaded_at|date:"M d, Y • H:i" }}
+
+                    <h4 class="text-xl font-cinzel text-white tracking-wide mb-4 group-hover:text-scarlet transition-colors truncate"
+                        title="{{ dataset.name }}">
+                        {{ dataset.name }}
+                    </h4>
+
+                    <!-- Stats Row -->
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="bg-black/40 rounded-lg p-2 border border-white/5">
+                            <div class="text-[10px] text-gray-500 uppercase tracking-tighter">Timelines</div>
+                            <div class="text-sm font-bold text-white">{{ dataset.total_rows|default:"-" }}</div>
+                        </div>
+                        <div class="bg-black/40 rounded-lg p-2 border border-white/5">
+                            <div class="text-[10px] text-gray-500 uppercase tracking-tighter">Dimensions</div>
+                            <div class="text-sm font-bold text-white">{{ dataset.total_cols|default:"-" }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Chaos Meter -->
+                    <div class="space-y-2 mb-6">
+                        <div
+                            class="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                            <span>Chaos Level</span>
+                            <span class="text-scarlet">{{ dataset.chaos_score }}%</span>
+                        </div>
+                        <div class="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                            <div class="h-full bg-gradient-to-r from-scarlet to-red-900 transition-all duration-1000"
+                                style="--chaos-width: {{ dataset.chaos_score|default:0 }}%; width: var(--chaos-width);">
+                            </div>
+                        </div>
+                        <p class="text-[9px] text-gray-600 italic">
+                            {% if dataset.chaos_score > 70 %}
+                            High distortion detected in reality fiber.
+                            {% elif dataset.chaos_score > 30 %}
+                            Minor temporal anomalies identified.
+                            {% else %}
+                            Reality is stable and coherent.
+                            {% endif %}
                         </p>
                     </div>
                 </div>
-                <a href="{% url 'upload' %}?id={{ dataset.id }}" class="ritual-nav btn-energy text-xs py-2 px-6">
-                    Load
-                </a>
+
+                <div class="relative z-10 mt-auto pt-4 border-t border-white/5 flex gap-2">
+                    <a href="{% url 'upload' %}?id={{ dataset.id }}"
+                        class="flex-1 btn-energy text-[11px] py-2.5 px-4 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Load Ritual
+                    </a>
+                </div>
             </div>
             {% empty %}
-            <div class="text-center py-16 glass-dark rounded-xl border border-dashed border-white/5">
-                <p class="text-gray-600 italic font-cinzel tracking-widest uppercase text-sm">No recent distortions
-                    found in the timeline.</p>
+            <div class="col-span-full text-center py-20 bg-black/20 rounded-2xl border border-dashed border-white/10">
+                <div
+                    class="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/5">
+                    <i class="fa-solid fa-ghost text-2xl text-gray-700"></i>
+                </div>
+                <p class="text-gray-500 font-cinzel tracking-widest uppercase text-sm">The timeline is empty. Manifest
+                    your first fragment.</p>
             </div>
             {% endfor %}
         </div>

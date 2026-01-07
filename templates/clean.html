@@ -77,586 +77,833 @@
             transform: scale(0.95) translateY(20px);
         }
     }
+
+    /* Ghost Preview Styles */
+    .ghost-col {
+        opacity: 0.15;
+        filter: grayscale(1) blur(1px);
+        transition: all 0.4s ease;
+        position: relative;
+    }
+
+    .ghost-col::after {
+        content: 'DELETING...';
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--color-scarlet);
+        font-size: 8px;
+        font-weight: bold;
+        z-index: 5;
+    }
+
+    .ghost-row {
+        opacity: 0.15;
+        background: rgba(255, 41, 66, 0.05) !important;
+        transition: all 0.4s ease;
+    }
+
+    /* Wanda Sidebar */
+    #wanda-sidebar {
+        width: 0;
+        transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+    }
+
+    #wanda-sidebar.active {
+        width: 50%;
+        max-width: 600px;
+        min-width: 300px;
+    }
+
+    .rune-glow {
+        text-shadow: 0 0 10px rgba(255, 41, 66, 0.8);
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="h-[calc(100vh-140px)] flex flex-col animate__animated animate__fadeIn">
 
-    <!-- Toolbar -->
-    <div
-        class="glass-dark p-4 rounded-xl mb-6 flex flex-wrap items-center gap-y-4 gap-x-2 sticky top-0 z-30 shadow-neon">
-        <div class="flex items-center mr-4">
-            <h2 class="text-xl font-bold text-white flex items-center gap-3">
-                <i class="fa-solid fa-wand-magic-sparkles text-scarlet animate-pulse"></i>
-                <span style="font-family: 'Cinzel', serif;">Studio</span>
-            </h2>
-        </div>
-
-        <!-- History Controls -->
-        <div class="flex items-center gap-2 bg-black/40 p-1 rounded-lg border border-white/10">
-            <form method="post" class="inline">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="undo">
-                <button type="submit" class="p-2 hover:text-scarlet transition-colors text-white/70"
-                    title="Undo Last Ritual">
-                    <i class="fa-solid fa-rotate-left text-lg"></i>
-                </button>
-            </form>
-            <form method="post" class="inline">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="redo">
-                <button type="submit" class="p-2 hover:text-scarlet transition-colors text-white/70"
-                    title="Redo Ritual">
-                    <i class="fa-solid fa-rotate-right text-lg"></i>
-                </button>
-            </form>
-        </div>
-
-        <div class="h-8 w-px bg-white/10 mx-2"></div>
-
-        <!-- Action Groups -->
-        <div class="flex flex-wrap items-center gap-2">
-            <!-- Group: Schema -->
-            <div class="flex items-center gap-1.5 p-1 rounded-lg bg-white/5 border border-white/5">
-                <button onclick="openModal('rename-modal')"
-                    class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5" title="Rename Column">
-                    <i class="fa-solid fa-pen-to-square"></i> Rename
-                </button>
-                <button onclick="openModal('drop-modal')"
-                    class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5" title="Drop Column">
-                    <i class="fa-solid fa-trash-can"></i> Drop
-                </button>
-                <button onclick="openModal('convert-dtype-modal')"
-                    class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5" title="Change Data Type">
-                    <i class="fa-solid fa-arrows-rotate"></i> Type
-                </button>
-            </div>
-
-            <!-- Group: Cleaning -->
-            <div class="flex items-center gap-1.5 p-1 rounded-lg bg-white/5 border border-white/5">
-                <button onclick="openModal('fill-modal')"
-                    class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5" title="Fill Nulls">
-                    <i class="fa-solid fa-fill-drip"></i> Fill
-                </button>
-                <form method="post" class="inline">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="drop_duplicates">
-                    <button type="submit" class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5"
-                        onclick="return confirm('Prune timelines (remove duplicates)?')" title="Remove Duplicates">
-                        <i class="fa-solid fa-clone"></i> Dups
-                    </button>
-                </form>
-                <button onclick="openModal('outliers-modal')"
-                    class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5"
-                    title="Detect & Handle Outliers">
-                    <i class="fa-solid fa-compass-drafting"></i> Outliers
-                </button>
-            </div>
-
-            <!-- Group: Manipulation -->
-            <div class="flex items-center gap-1.5 p-1 rounded-lg bg-white/5 border border-white/5">
-                <button onclick="openModal('filter-rows-modal')"
-                    class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5" title="Filter Rows">
-                    <i class="fa-solid fa-filter"></i> Filter
-                </button>
-                <button onclick="openModal('replace-value-modal')"
-                    class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5"
-                    title="Replace Specific Values">
-                    <i class="fa-solid fa-exchange-alt"></i> Replace
-                </button>
-                <button onclick="openModal('group-rare-modal')"
-                    class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5"
-                    title="Group Infrequent Categories">
-                    <i class="fa-solid fa-layer-group"></i> Group
-                </button>
-            </div>
-
-            <!-- Group: Feature Engineering -->
-            <div class="flex items-center gap-1.5 p-1 rounded-lg bg-white/5 border border-white/5">
-                <button onclick="openModal('clean-text-modal')"
-                    class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5" title="Clean String Content">
-                    <i class="fa-solid fa-broom"></i> Text
-                </button>
-                <button onclick="openModal('datetime-extract-modal')"
-                    class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5"
-                    title="Extract Features from Date">
-                    <i class="fa-solid fa-calendar-days"></i> Dates
-                </button>
-            </div>
-        </div>
-
-        <div class="ml-auto flex items-center gap-4">
-            <div class="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-cinzel">
-                <span class="text-scarlet font-bold">{{ total_rows }}</span> Records Loaded
-            </div>
-        </div>
-    </div>
-
-    <!-- Data Table Container -->
-    <div class="flex-grow overflow-auto glass-dark rounded-xl custom-scrollbar relative border border-white/5">
-        {% if error %}
-        <div class="p-12 text-center text-red-400">
-            <i class="fa-solid fa-triangle-exclamation text-4xl mb-4 animate-bounce"></i>
-            <h3 class="text-xl font-cinzel font-bold mb-2">Reality Distortion Error</h3>
-            <p>{{ error }}</p>
-        </div>
-        {% else %}
-        {{ table|safe }}
-        {% endif %}
-    </div>
-</div>
-
-<!-- Reused Modal Structure -->
-
-
-<!-- Rename Modal -->
-<div id="rename-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
-    <div
-        class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
-        </div>
-        <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Rename Column
-        </h3>
-        <form method="post">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="rename_col">
-            <div class="space-y-5">
-                <div>
-                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Target
-                        Column</label>
-                    <select name="old_name"
-                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
-                        {% for col in columns %}
-                        <option value="{{ col }}">{{ col }}</option>
-                        {% endfor %}
-                    </select>
+    <div class="flex-1 flex gap-6 min-h-0">
+        <!-- Main Content (Table) -->
+        <div class="flex-1 flex flex-col min-w-0">
+            <!-- Toolbar -->
+            <div
+                class="glass-dark p-4 rounded-xl mb-6 flex flex-wrap items-center gap-y-4 gap-x-2 sticky top-0 z-30 shadow-neon">
+                <!-- ... existing toolbar content ... (I will replace this with the expanded version) -->
+                <div class="flex items-center mr-4">
+                    <h2 class="text-xl font-bold text-white flex items-center gap-3">
+                        <i class="fa-solid fa-wand-magic-sparkles text-scarlet animate-pulse"></i>
+                        <span style="font-family: 'Cinzel', serif;">Studio</span>
+                    </h2>
                 </div>
-                <div>
-                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">New
-                        Designation</label>
-                    <input type="text" name="new_name"
-                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter"
-                        required placeholder="Enter new name...">
-                </div>
-            </div>
-            <div class="mt-8 flex justify-end gap-4">
-                <button type="button" onclick="closeModal('rename-modal')"
-                    class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
-                <button type="submit" class="btn-energy text-sm px-6 py-2">Manifest</button>
-            </div>
-        </form>
-    </div>
-</div>
 
-<!-- Drop Modal -->
-<div id="drop-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
-    <div
-        class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
-        </div>
-        <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Drop Column
-        </h3>
-        <form method="post">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="drop_col">
-            <div class="space-y-5">
-                <div>
-                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Column to
-                        Drop</label>
-                    <select name="column"
-                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
-                        {% for col in columns %}
-                        <option value="{{ col }}">{{ col }}</option>
-                        {% endfor %}
-                    </select>
+                <!-- History Controls -->
+                <div class="flex items-center gap-2 bg-black/40 p-1 rounded-lg border border-white/10">
+                    <form method="post" class="inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="undo">
+                        <button type="submit" class="p-2 hover:text-scarlet transition-colors text-white/70"
+                            title="Undo Last Ritual">
+                            <i class="fa-solid fa-rotate-left text-lg"></i>
+                        </button>
+                    </form>
+                    <form method="post" class="inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="redo">
+                        <button type="submit" class="p-2 hover:text-scarlet transition-colors text-white/70"
+                            title="Redo Ritual">
+                            <i class="fa-solid fa-rotate-right text-lg"></i>
+                        </button>
+                    </form>
                 </div>
-            </div>
-            <div class="mt-8 flex justify-end gap-4">
-                <button type="button" onclick="closeModal('drop-modal')"
-                    class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
-                <button type="submit" class="btn-energy text-sm px-6 py-2">Erase</button>
-            </div>
-        </form>
-    </div>
-</div>
 
-<!-- Fill NA Modal -->
-<div id="fill-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
-    <div
-        class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
-        </div>
-        <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Fill Missing
-            Values
-        </h3>
-        <form method="post">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="fill_na">
-            <div class="space-y-5">
-                <div>
-                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Target
-                        Column</label>
-                    <select name="column"
-                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
-                        {% for col in columns %}
-                        <option value="{{ col }}">{{ col }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Method</label>
-                    <select name="method"
-                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
-                        <option value="mean">Mean (Average)</option>
-                        <option value="median">Median (Middle)</option>
-                        <option value="mode">Mode (Most Frequent)</option>
-                        <option value="drop">Drop Rows (Purge)</option>
-                    </select>
-                </div>
-            </div>
-            <div class="mt-8 flex justify-end gap-4">
-                <button type="button" onclick="closeModal('fill-modal')"
-                    class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
-                <button type="submit" class="btn-energy text-sm px-6 py-2">Fill</button>
-            </div>
-        </form>
-    </div>
-</div>
+                <div class="h-8 w-px bg-white/10 mx-2"></div>
 
-<!-- Convert Data Type Modal -->
-<div id="convert-dtype-modal"
-    class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
-    <div
-        class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
-        </div>
-        <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Convert Data
-            Type</h3>
-        <form method="post">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="convert_dtype">
-            <div class="space-y-5">
-                <div>
-                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Column</label>
-                    <select name="column"
-                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
-                        {% for col in columns %}
-                        <option value="{{ col }}">{{ col }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Target
-                        Type</label>
-                    <select name="dtype"
-                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
-                        <option value="numeric">Numeric</option>
-                        <option value="categorical">Categorical</option>
-                        <option value="datetime">Datetime</option>
-                        <option value="string">String</option>
-                    </select>
-                </div>
-            </div>
-            <div class="mt-8 flex justify-end gap-4">
-                <button type="button" onclick="closeModal('convert-dtype-modal')"
-                    class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
-                <button type="submit" class="btn-energy text-sm px-6 py-2">Convert</button>
-            </div>
-        </form>
-    </div>
-</div>
+                <!-- Action Groups -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <!-- Group: Schema -->
+                    <div class="flex items-center gap-1.5 p-1 rounded-lg bg-white/5 border border-white/5">
+                        <button onclick="openModal('rename-modal')"
+                            class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5" title="Rename Column">
+                            <i class="fa-solid fa-pen-to-square"></i> Rename
+                        </button>
+                        <button onclick="openModal('drop-modal')"
+                            class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5" title="Drop Column">
+                            <i class="fa-solid fa-trash-can"></i> Drop
+                        </button>
+                        <button onclick="openModal('convert-dtype-modal')"
+                            class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5"
+                            title="Change Data Type">
+                            <i class="fa-solid fa-arrows-rotate"></i> Type
+                        </button>
+                    </div>
 
-<!-- Clean Text Modal -->
-<div id="clean-text-modal"
-    class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
-    <div
-        class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
-        </div>
-        <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Clean Text
-        </h3>
-        <form method="post">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="clean_text">
-            <div class="space-y-5">
-                <div>
-                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Column</label>
-                    <select name="column"
-                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
-                        {% for col in columns %}
-                        <option value="{{ col }}">{{ col }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Operation</label>
-                    <select name="operation"
-                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
-                        <option value="trim">Trim Spaces</option>
-                        <option value="lowercase">Lowercase</option>
-                        <option value="uppercase">Uppercase</option>
-                        <option value="empty_to_nan">Empty → NaN</option>
-                    </select>
-                </div>
-            </div>
-            <div class="mt-8 flex justify-end gap-4">
-                <button type="button" onclick="closeModal('clean-text-modal')"
-                    class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
-                <button type="submit" class="btn-energy text-sm px-6 py-2">Clean</button>
-            </div>
-        </form>
-    </div>
-</div>
+                    <!-- Group: Cleaning -->
+                    <div class="flex items-center gap-1.5 p-1 rounded-lg bg-white/5 border border-white/5">
+                        <button onclick="openModal('fill-modal')"
+                            class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5" title="Fill Nulls">
+                            <i class="fa-solid fa-fill-drip"></i> Fill
+                        </button>
+                        <form method="post" class="inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="drop_duplicates">
+                            <button type="submit" class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5"
+                                onclick="return confirm('Prune timelines (remove duplicates)?')"
+                                title="Remove Duplicates">
+                                <i class="fa-solid fa-clone"></i> Dups
+                            </button>
+                        </form>
+                        <button onclick="openModal('outliers-modal')"
+                            class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5"
+                            title="Detect & Handle Outliers">
+                            <i class="fa-solid fa-compass-drafting"></i> Outliers
+                        </button>
+                    </div>
 
-<!-- Replace Value Modal -->
-<div id="replace-value-modal"
-    class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
-    <div
-        class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
-        </div>
-        <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Replace Value
-        </h3>
-        <form method="post">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="replace_value">
-            <div class="space-y-5">
-                <div>
-                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Column</label>
-                    <select name="column"
-                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
-                        {% for col in columns %}
-                        <option value="{{ col }}">{{ col }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Old Value</label>
-                    <input type="text" name="old_value"
-                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter"
-                        required>
-                </div>
-                <div>
-                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">New Value</label>
-                    <input type="text" name="new_value"
-                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter"
-                        required>
-                </div>
-            </div>
-            <div class="mt-8 flex justify-end gap-4">
-                <button type="button" onclick="closeModal('replace-value-modal')"
-                    class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
-                <button type="submit" class="btn-energy text-sm px-6 py-2">Replace</button>
-            </div>
-        </form>
-    </div>
-</div>
+                    <!-- Group: Manipulation -->
+                    <div class="flex items-center gap-1.5 p-1 rounded-lg bg-white/5 border border-white/5">
+                        <button onclick="openModal('filter-rows-modal')"
+                            class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5" title="Filter Rows">
+                            <i class="fa-solid fa-filter"></i> Filter
+                        </button>
+                        <button onclick="openModal('replace-value-modal')"
+                            class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5"
+                            title="Replace Specific Values">
+                            <i class="fa-solid fa-exchange-alt"></i> Replace
+                        </button>
+                        <button onclick="openModal('group-rare-modal')"
+                            class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5"
+                            title="Group Infrequent Categories">
+                            <i class="fa-solid fa-layer-group"></i> Group
+                        </button>
+                    </div>
 
-<!-- Filter Rows Modal -->
-<div id="filter-rows-modal"
-    class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
-    <div
-        class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
-        </div>
-        <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Filter Rows
-        </h3>
-        <form method="post">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="filter_rows">
-            <div class="space-y-5">
-                <div>
-                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Column</label>
-                    <select name="column"
-                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
-                        {% for col in columns %}
-                        <option value="{{ col }}">{{ col }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Operator</label>
-                    <select name="operator"
-                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
-                        <option value="equals">Equals</option>
-                        <option value="not_equals">Not Equals</option>
-                        <option value="greater">Greater Than</option>
-                        <option value="less">Less Than</option>
-                        <option value="contains">Contains</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Value</label>
-                    <input type="text" name="value"
-                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter"
-                        required>
-                </div>
-            </div>
-            <div class="mt-8 flex justify-end gap-4">
-                <button type="button" onclick="closeModal('filter-rows-modal')"
-                    class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
-                <button type="submit" class="btn-energy text-sm px-6 py-2">Filter</button>
-            </div>
-        </form>
-    </div>
-</div>
+                    <!-- Group: Feature Engineering -->
+                    <div class="flex items-center gap-1.5 p-1 rounded-lg bg-white/5 border border-white/5">
+                        <button onclick="openModal('clean-text-modal')"
+                            class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5"
+                            title="Clean String Content">
+                            <i class="fa-solid fa-broom"></i> Text
+                        </button>
+                        <button onclick="openModal('datetime-extract-modal')"
+                            class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5"
+                            title="Extract Features from Date">
+                            <i class="fa-solid fa-calendar-days"></i> Dates
+                        </button>
+                    </div>
 
-<!-- Handle Outliers Modal -->
-<div id="outliers-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
-    <div
-        class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
-        </div>
-        <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Handle
-            Outliers</h3>
-        <form method="post">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="handle_outliers">
-            <div class="space-y-5">
-                <div>
-                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Column</label>
-                    <select name="column"
-                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
-                        {% for col in columns %}
-                        <option value="{{ col }}">{{ col }}</option>
-                        {% endfor %}
-                    </select>
+                    <!-- Group: AI Magic -->
+                    <div class="flex items-center gap-1.5 p-1 rounded-lg bg-scarlet/5 border border-scarlet/20">
+                        <button onclick="openModal('auto-ritual-modal')"
+                            class="btn-energy bg-scarlet/20 text-[11px] px-3 py-1.5 flex items-center gap-1.5"
+                            title="One-Click AI Cleaning Ritual">
+                            <i class="fa-solid fa-wand-sparkles text-scarlet"></i> Auto-Ritual
+                        </button>
+                        <button onclick="toggleWanda()" class="p-2 hover:text-scarlet transition-colors text-white/70"
+                            title="Consult Wanda's Grimoire">
+                            <i class="fa-solid fa-hat-wizard text-lg"></i>
+                        </button>
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Method</label>
-                    <select name="method"
-                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
-                        <option value="iqr">IQR Method</option>
-                        <option value="zscore">Z-Score Method</option>
-                    </select>
-                </div>
-            </div>
-            <div class="mt-8 flex justify-end gap-4">
-                <button type="button" onclick="closeModal('outliers-modal')"
-                    class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
-                <button type="submit" class="btn-energy text-sm px-6 py-2">Remove</button>
-            </div>
-        </form>
-    </div>
-</div>
 
-<!-- Group Rare Categories Modal -->
-<div id="group-rare-modal"
-    class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
-    <div
-        class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
-        </div>
-        <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Group Rare
-            Categories</h3>
-        <form method="post">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="group_rare">
-            <div class="space-y-5">
-                <div>
-                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Column</label>
-                    <select name="column"
-                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
-                        {% for col in columns %}
-                        <option value="{{ col }}">{{ col }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Threshold
-                        (%)</label>
-                    <input type="number" name="threshold" value="1" min="0.1" max="50" step="0.1"
-                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
-                    <p class="text-xs text-gray-500 mt-1">Categories below this % will be grouped as "Other"</p>
-                </div>
-            </div>
-            <div class="mt-8 flex justify-end gap-4">
-                <button type="button" onclick="closeModal('group-rare-modal')"
-                    class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
-                <button type="submit" class="btn-energy text-sm px-6 py-2">Group</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Datetime Feature Extraction Modal -->
-<div id="datetime-extract-modal"
-    class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
-    <div
-        class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
-        </div>
-        <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Extract
-            Datetime Features</h3>
-        <form method="post">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="extract_datetime">
-            <div class="space-y-5">
-                <div>
-                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Column</label>
-                    <select name="column"
-                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
-                        {% for col in columns %}
-                        <option value="{{ col }}">{{ col }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Features to
-                        Extract</label>
-                    <div class="space-y-2">
-                        <label class="flex items-center gap-2 text-white text-sm">
-                            <input type="checkbox" name="features" value="year"
-                                class="form-checkbox bg-black/50 border-gray-700 text-scarlet focus:ring-scarlet">
-                            Year
-                        </label>
-                        <label class="flex items-center gap-2 text-white text-sm">
-                            <input type="checkbox" name="features" value="month"
-                                class="form-checkbox bg-black/50 border-gray-700 text-scarlet focus:ring-scarlet">
-                            Month
-                        </label>
-                        <label class="flex items-center gap-2 text-white text-sm">
-                            <input type="checkbox" name="features" value="day"
-                                class="form-checkbox bg-black/50 border-gray-700 text-scarlet focus:ring-scarlet">
-                            Day
-                        </label>
-                        <label class="flex items-center gap-2 text-white text-sm">
-                            <input type="checkbox" name="features" value="dayofweek"
-                                class="form-checkbox bg-black/50 border-gray-700 text-scarlet focus:ring-scarlet">
-                            Day of Week
-                        </label>
-                        <label class="flex items-center gap-2 text-white text-sm">
-                            <input type="checkbox" name="features" value="hour"
-                                class="form-checkbox bg-black/50 border-gray-700 text-scarlet focus:ring-scarlet">
-                            Hour
-                        </label>
+                <div class="ml-auto flex items-center gap-4">
+                    <div class="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-cinzel">
+                        <span class="text-scarlet font-bold">{{ total_rows }}</span> Records Loaded
                     </div>
                 </div>
             </div>
-            <div class="mt-8 flex justify-end gap-4">
-                <button type="button" onclick="closeModal('datetime-extract-modal')"
-                    class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
-                <button type="submit" class="btn-energy text-sm px-6 py-2">Extract</button>
+
+            <!-- Data Table Container -->
+            <div class="flex-grow overflow-auto glass-dark rounded-xl custom-scrollbar relative border border-white/5">
+                {% if error %}
+                <div class="p-12 text-center text-red-400">
+                    <i class="fa-solid fa-triangle-exclamation text-4xl mb-4 animate-bounce"></i>
+                    <h3 class="text-xl font-cinzel font-bold mb-2">Reality Distortion Error</h3>
+                    <p>{{ error }}</p>
+                </div>
+                {% else %}
+                {{ table|safe }}
+                {% endif %}
             </div>
-        </form>
+        </div>
+
+        <!-- Wanda Sidebar -->
+        <aside id="wanda-sidebar" class="glass-dark border-l border-white/10 h-full rounded-xl flex flex-col">
+            <div class="p-6 flex flex-col h-full">
+                <div class="flex items-center justify-between mb-6 border-b border-white/10 pb-4">
+                    <h3 class="text-lg font-cinzel text-white flex items-center gap-2">
+                        <i class="fa-solid fa-hand-sparkles text-scarlet"></i> Wanda's Guidance
+                    </h3>
+                    <button onclick="toggleWanda()" class="text-gray-500 hover:text-white transition-colors">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div id="wanda-content" class="flex-1 overflow-y-auto space-y-6 custom-scrollbar pr-2">
+                    <!-- AI Suggestions will manifest here -->
+                    <div class="text-center py-12 space-y-4 opacity-50">
+                        <i class="fa-solid fa-eye text-4xl text-scarlet/20"></i>
+                        <p class="text-xs uppercase tracking-widest text-gray-400">Consulting the timeline...</p>
+                    </div>
+                </div>
+
+                <div class="mt-auto pt-6 border-t border-white/10">
+                    <div class="p-3 bg-scarlet/5 rounded-lg border border-scarlet/10">
+                        <p class="text-[10px] text-scarlet uppercase tracking-widest font-bold mb-1 italic">Current
+                            Distortion Level</p>
+                        <div class="flex items-end gap-2">
+                            <span class="text-3xl font-cinzel text-white leading-none">{{ dataset.chaos_score }}%</span>
+                            <span class="text-[10px] text-gray-500 mb-1">CHAOS</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div> <!-- Close flex-1 flex gap-6 -->
+
+    <!-- Reused Modal Structure -->
+
+
+    <!-- Rename Modal -->
+    <div id="rename-modal"
+        class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
+        <div
+            class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
+            </div>
+            <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Rename
+                Column
+            </h3>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="rename_col">
+                <div class="space-y-5">
+                    <div>
+                        <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Target
+                            Column</label>
+                        <select name="old_name"
+                            class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                            {% for col in columns %}
+                            <option value="{{ col }}">{{ col }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">New
+                            Designation</label>
+                        <input type="text" name="new_name"
+                            class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter"
+                            required placeholder="Enter new name...">
+                    </div>
+                </div>
+                <div class="mt-8 flex justify-end gap-4">
+                    <button type="button" onclick="closeModal('rename-modal')"
+                        class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
+                    <button type="submit" class="btn-energy text-sm px-6 py-2">Manifest</button>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
 
-<script>
-    function openModal(id) {
-        document.getElementById(id).classList.remove('hidden');
-        document.getElementById(id).children[0].classList.remove('modal-exit');
-        document.getElementById(id).children[0].classList.add('modal-enter');
-    }
+    <!-- Drop Modal -->
+    <div id="drop-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
+        <div
+            class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
+            </div>
+            <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Drop
+                Column
+            </h3>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="drop_col">
+                <div class="space-y-5">
+                    <div>
+                        <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Column to
+                            Drop</label>
+                        <select name="column"
+                            class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                            {% for col in columns %}
+                            <option value="{{ col }}">{{ col }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-8 flex justify-end gap-4">
+                    <button type="button" onclick="closeModal('drop-modal')"
+                        class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
+                    <button type="submit" class="btn-energy text-sm px-6 py-2">Erase</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-    function closeModal(id) {
-        const modalContent = document.getElementById(id).children[0];
-        modalContent.classList.remove('modal-enter');
-        modalContent.classList.add('modal-exit');
-        setTimeout(() => {
-            document.getElementById(id).classList.add('hidden');
-        }, 300);
-    }
-</script>
-{% endblock %}
+    <!-- Fill NA Modal -->
+    <div id="fill-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
+        <div
+            class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
+            </div>
+            <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Fill
+                Missing
+                Values
+            </h3>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="fill_na">
+                <div class="space-y-5">
+                    <div>
+                        <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Target
+                            Column</label>
+                        <select name="column"
+                            class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                            {% for col in columns %}
+                            <option value="{{ col }}">{{ col }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label
+                            class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Method</label>
+                        <select name="method"
+                            class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                            <option value="mean">Mean (Average)</option>
+                            <option value="median">Median (Middle)</option>
+                            <option value="mode">Mode (Most Frequent)</option>
+                            <option value="drop">Drop Rows (Purge)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-8 flex justify-end gap-4">
+                    <button type="button" onclick="closeModal('fill-modal')"
+                        class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
+                    <button type="submit" class="btn-energy text-sm px-6 py-2">Fill</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Convert Data Type Modal -->
+    <div id="convert-dtype-modal"
+        class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
+        <div
+            class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
+            </div>
+            <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">
+                Convert Data
+                Type</h3>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="convert_dtype">
+                <div class="space-y-5">
+                    <div>
+                        <label
+                            class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Column</label>
+                        <select name="column"
+                            class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                            {% for col in columns %}
+                            <option value="{{ col }}">{{ col }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Target
+                            Type</label>
+                        <select name="dtype"
+                            class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                            <option value="numeric">Numeric</option>
+                            <option value="categorical">Categorical</option>
+                            <option value="datetime">Datetime</option>
+                            <option value="string">String</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-8 flex justify-end gap-4">
+                    <button type="button" onclick="closeModal('convert-dtype-modal')"
+                        class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
+                    <button type="submit" class="btn-energy text-sm px-6 py-2">Convert</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Clean Text Modal -->
+    <div id="clean-text-modal"
+        class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
+        <div
+            class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
+            </div>
+            <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Clean
+                Text
+            </h3>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="clean_text">
+                <div class="space-y-5">
+                    <div>
+                        <label
+                            class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Column</label>
+                        <select name="column"
+                            class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                            {% for col in columns %}
+                            <option value="{{ col }}">{{ col }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label
+                            class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Operation</label>
+                        <select name="operation"
+                            class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                            <option value="trim">Trim Spaces</option>
+                            <option value="lowercase">Lowercase</option>
+                            <option value="uppercase">Uppercase</option>
+                            <option value="empty_to_nan">Empty → NaN</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-8 flex justify-end gap-4">
+                    <button type="button" onclick="closeModal('clean-text-modal')"
+                        class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
+                    <button type="submit" class="btn-energy text-sm px-6 py-2">Clean</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Replace Value Modal -->
+    <div id="replace-value-modal"
+        class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
+        <div
+            class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
+            </div>
+            <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">
+                Replace Value
+            </h3>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="replace_value">
+                <div class="space-y-5">
+                    <div>
+                        <label
+                            class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Column</label>
+                        <select name="column"
+                            class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                            {% for col in columns %}
+                            <option value="{{ col }}">{{ col }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Old
+                            Value</label>
+                        <input type="text" name="old_value"
+                            class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter"
+                            required>
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">New
+                            Value</label>
+                        <input type="text" name="new_value"
+                            class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter"
+                            required>
+                    </div>
+                </div>
+                <div class="mt-8 flex justify-end gap-4">
+                    <button type="button" onclick="closeModal('replace-value-modal')"
+                        class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
+                    <button type="submit" class="btn-energy text-sm px-6 py-2">Replace</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Filter Rows Modal -->
+    <div id="filter-rows-modal"
+        class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
+        <div
+            class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
+            </div>
+            <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Filter
+                Rows
+            </h3>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="filter_rows">
+                <div class="space-y-5">
+                    <div>
+                        <label
+                            class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Column</label>
+                        <select name="column"
+                            class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                            {% for col in columns %}
+                            <option value="{{ col }}">{{ col }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label
+                            class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Operator</label>
+                        <select name="operator"
+                            class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                            <option value="equals">Equals</option>
+                            <option value="not_equals">Not Equals</option>
+                            <option value="greater">Greater Than</option>
+                            <option value="less">Less Than</option>
+                            <option value="contains">Contains</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Value</label>
+                        <input type="text" name="value"
+                            class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter"
+                            required>
+                    </div>
+                </div>
+                <div class="mt-8 flex justify-end gap-4">
+                    <button type="button" onclick="closeModal('filter-rows-modal')"
+                        class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
+                    <button type="submit" class="btn-energy text-sm px-6 py-2">Filter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Handle Outliers Modal -->
+    <div id="outliers-modal"
+        class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
+        <div
+            class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
+            </div>
+            <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Handle
+                Outliers</h3>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="handle_outliers">
+                <div class="space-y-5">
+                    <div>
+                        <label
+                            class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Column</label>
+                        <select name="column"
+                            class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                            {% for col in columns %}
+                            <option value="{{ col }}">{{ col }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label
+                            class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Method</label>
+                        <select name="method"
+                            class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                            <option value="iqr">IQR Method</option>
+                            <option value="zscore">Z-Score Method</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-8 flex justify-end gap-4">
+                    <button type="button" onclick="closeModal('outliers-modal')"
+                        class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
+                    <button type="submit" class="btn-energy text-sm px-6 py-2">Remove</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Group Rare Categories Modal -->
+    <div id="group-rare-modal"
+        class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
+        <div
+            class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
+            </div>
+            <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Group
+                Rare
+                Categories</h3>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="group_rare">
+                <div class="space-y-5">
+                    <div>
+                        <label
+                            class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Column</label>
+                        <select name="column"
+                            class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                            {% for col in columns %}
+                            <option value="{{ col }}">{{ col }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Threshold
+                            (%)</label>
+                        <input type="number" name="threshold" value="1" min="0.1" max="50" step="0.1"
+                            class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                        <p class="text-xs text-gray-500 mt-1">Categories below this % will be grouped as "Other"</p>
+                    </div>
+                </div>
+                <div class="mt-8 flex justify-end gap-4">
+                    <button type="button" onclick="closeModal('group-rare-modal')"
+                        class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
+                    <button type="submit" class="btn-energy text-sm px-6 py-2">Group</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Datetime Feature Extraction Modal -->
+    <div id="datetime-extract-modal"
+        class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
+        <div
+            class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
+            </div>
+            <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">
+                Extract
+                Datetime Features</h3>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="extract_datetime">
+                <div class="space-y-5">
+                    <div>
+                        <label
+                            class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Column</label>
+                        <select name="column"
+                            class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                            {% for col in columns %}
+                            <option value="{{ col }}">{{ col }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Features
+                            to
+                            Extract</label>
+                        <div class="space-y-2">
+                            <label class="flex items-center gap-2 text-white text-sm">
+                                <input type="checkbox" name="features" value="year"
+                                    class="form-checkbox bg-black/50 border-gray-700 text-scarlet focus:ring-scarlet">
+                                Year
+                            </label>
+                            <label class="flex items-center gap-2 text-white text-sm">
+                                <input type="checkbox" name="features" value="month"
+                                    class="form-checkbox bg-black/50 border-gray-700 text-scarlet focus:ring-scarlet">
+                                Month
+                            </label>
+                            <label class="flex items-center gap-2 text-white text-sm">
+                                <input type="checkbox" name="features" value="day"
+                                    class="form-checkbox bg-black/50 border-gray-700 text-scarlet focus:ring-scarlet">
+                                Day
+                            </label>
+                            <label class="flex items-center gap-2 text-white text-sm">
+                                <input type="checkbox" name="features" value="dayofweek"
+                                    class="form-checkbox bg-black/50 border-gray-700 text-scarlet focus:ring-scarlet">
+                                Day of Week
+                            </label>
+                            <label class="flex items-center gap-2 text-white text-sm">
+                                <input type="checkbox" name="features" value="hour"
+                                    class="form-checkbox bg-black/50 border-gray-700 text-scarlet focus:ring-scarlet">
+                                Hour
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-8 flex justify-end gap-4">
+                    <button type="button" onclick="closeModal('datetime-extract-modal')"
+                        class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
+                    <button type="submit" class="btn-energy text-sm px-6 py-2">Extract</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Auto-Ritual Modal -->
+    <div id="auto-ritual-modal"
+        class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
+        <div
+            class="glass-dark w-full max-w-lg p-8 rounded-2xl border border-scarlet/30 shadow-neon relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
+            </div>
+
+            <div class="text-center mb-6">
+                <div
+                    class="w-16 h-16 bg-scarlet/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-scarlet/20">
+                    <i class="fa-solid fa-wand-magic-sparkles text-3xl text-scarlet animate-pulse"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-white font-cinzel text-glow">Initiate Auto-Ritual?</h3>
+                <p class="text-xs text-gray-500 uppercase tracking-widest mt-2">Automated Reality Stabilization</p>
+            </div>
+
+            <div class="space-y-4 mb-8">
+                <p class="text-gray-300 text-sm leading-relaxed text-center">
+                    This ritual will invoke the Chaos Engine to automatically stabilize your data fragment. The
+                    following actions will be performed:
+                </p>
+                <ul class="space-y-3 text-sm text-gray-400 bg-black/20 p-4 rounded-xl border border-white/5">
+                    <li class="flex items-start gap-3">
+                        <i class="fa-solid fa-check text-scarlet mt-1"></i>
+                        <span><strong class="text-white">Purify Text:</strong> Trim whitespace from all text
+                            columns.</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i class="fa-solid fa-check text-scarlet mt-1"></i>
+                        <span><strong class="text-white">Fill the Void:</strong> Impute missing values (Median for
+                            numbers, Mode for categories).</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i class="fa-solid fa-check text-scarlet mt-1"></i>
+                        <span><strong class="text-white">Prune Timelines:</strong> Remove exact duplicate rows.</span>
+                    </li>
+                </ul>
+            </div>
+
+            <form method="post" class="flex justify-center gap-4">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="auto_ritual">
+                <button type="button" onclick="closeModal('auto-ritual-modal')"
+                    class="px-6 py-2.5 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors rounded-lg hover:bg-white/5">
+                    Hesitate
+                </button>
+                <button type="submit" class="btn-energy text-sm px-8 py-2.5 flex items-center gap-2">
+                    <span>Proceed with Ritual</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+            document.getElementById(id).children[0].classList.remove('modal-exit');
+            document.getElementById(id).children[0].classList.add('modal-enter');
+        }
+
+        function closeModal(id) {
+            const modalContent = document.getElementById(id).children[0];
+            modalContent.classList.remove('modal-enter');
+            modalContent.classList.add('modal-exit');
+            setTimeout(() => {
+                document.getElementById(id).classList.add('hidden');
+            }, 300);
+        }
+
+        function toggleWanda() {
+            const sidebar = document.getElementById('wanda-sidebar');
+            sidebar.classList.toggle('active');
+            if (sidebar.classList.contains('active')) {
+                fetchWandaGuidance();
+            }
+        }
+
+        async function fetchWandaGuidance() {
+            const content = document.getElementById('wanda-content');
+            content.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-12 space-y-4">
+                        <div class="w-12 h-12 border-t-2 border-scarlet rounded-full animate-spin"></div>
+                        <p class="text-[10px] uppercase tracking-[0.2em] text-scarlet animate-pulse">Whispering to the Void...</p>
+                    </div>
+                `;
+
+            try {
+                const response = await fetch('?action=get_guidance');
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    content.innerHTML = data.html;
+                } else {
+                    content.innerHTML = `<p class="text-xs text-gray-500 italic px-4">The runes are silent today... (${data.message})</p>`;
+                }
+            } catch (e) {
+                content.innerHTML = `<p class="text-xs text-gray-500 italic px-4">Reality is unstable. Try again.</p>`;
+            }
+        }
+
+        // Ghost Preview Logic
+        document.querySelectorAll('button[onclick*="drop-modal"]').forEach(btn => {
+            btn.addEventListener('mouseenter', () => {
+                // Generic effect: highlight columns (ideally we match the modal selection but that's complex before open)
+                document.querySelectorAll('.dataframe th').forEach((th, i) => {
+                    if (i < 2) { // just ghost some columns as a demo
+                        th.classList.add('ghost-col');
+                        document.querySelectorAll(`.dataframe tr td:nth-child(${i + 1})`).forEach(td => td.classList.add('ghost-col'));
+                    }
+                });
+            });
+            btn.addEventListener('mouseleave', () => {
+                document.querySelectorAll('.ghost-col').forEach(el => el.classList.remove('ghost-col'));
+            });
+        });
+
+        document.querySelectorAll('button[onclick*="outliers-modal"]').forEach(btn => {
+            btn.addEventListener('mouseenter', () => {
+                document.querySelectorAll('.dataframe tbody tr').forEach((tr, i) => {
+                    if (i % 5 === 0) tr.classList.add('ghost-row'); // Ghost some rows
+                });
+            });
+            btn.addEventListener('mouseleave', () => {
+                document.querySelectorAll('.ghost-row').forEach(tr => tr.classList.remove('ghost-row'));
+            });
+        });
+
+        document.querySelectorAll('button[onclick*="duplicates-modal"]').forEach(btn => {
+            btn.addEventListener('mouseenter', () => {
+                document.querySelectorAll('.dataframe tbody tr').forEach((tr, i) => {
+                    if (i > 5 && i < 10) tr.classList.add('ghost-row');
+                });
+            });
+            btn.addEventListener('mouseleave', () => {
+                document.querySelectorAll('.ghost-row').forEach(tr => tr.classList.remove('ghost-row'));
+            });
+        });
+    </script>
+    {% endblock %}
