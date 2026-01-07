@@ -66,14 +66,6 @@
             </h1>
             <p class="text-scarlet/60 mt-2 text-sm uppercase tracking-[0.3em] font-medium">Reality Scan Complete</p>
         </div>
-        <div class="flex gap-4">
-            <a href="{% url 'clean' %}" class="btn-energy text-sm flex items-center gap-2 ritual-nav">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> Reshape
-            </a>
-            <a href="{% url 'visualize' %}" class="btn-energy text-sm flex items-center gap-2 ritual-nav">
-                <i class="fa-solid fa-eye"></i> Visualize
-            </a>
-        </div>
     </div>
 
     {% if error %}
@@ -227,42 +219,42 @@
         </div>
     </div>
     {% endif %}
-<!-- Numeric Distribution Indicators -->
-{% if numeric_distribution %}
-<div class="glass-dark p-6 rounded-xl shadow-void">
-    <h3 class="text-lg font-bold text-white mb-6 border-b border-white/10 pb-4 font-cinzel flex items-center gap-3">
-        <i class="fa-solid fa-chart-line text-scarlet"></i>
-        Numeric Distribution Shape
-    </h3>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {% for dist in numeric_distribution %}
-        <div class="p-4 bg-void border border-white/10 rounded hover:border-scarlet transition-colors">
-            <div class="mb-3">
-                <span class="text-gray-300 font-medium text-sm">{{ dist.column }}</span>
+    <!-- Numeric Distribution Indicators -->
+    {% if numeric_distribution %}
+    <div class="glass-dark p-6 rounded-xl shadow-void">
+        <h3 class="text-lg font-bold text-white mb-6 border-b border-white/10 pb-4 font-cinzel flex items-center gap-3">
+            <i class="fa-solid fa-chart-line text-scarlet"></i>
+            Numeric Distribution Shape
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for dist in numeric_distribution %}
+            <div class="p-4 bg-void border border-white/10 rounded hover:border-scarlet transition-colors">
+                <div class="mb-3">
+                    <span class="text-gray-300 font-medium text-sm">{{ dist.column }}</span>
+                </div>
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400 text-xs">Skewness:</span>
+                        <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 rounded text-xs font-bold">
+                            {{ dist.skew_label }}
+                        </span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400 text-xs">Skew Value:</span>
+                        <span class="text-white text-xs font-mono">{{ dist.skewness }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400 text-xs">Outliers:</span>
+                        <span class="text-orange-400 text-xs font-bold">
+                            {{ dist.outliers }} <span class="opacity-75">({{ dist.outlier_pct_val }}%)</span>
+                        </span>
+                    </div>
+                </div>
             </div>
-            <div class="space-y-2">
-                <div class="flex justify-between items-center">
-                    <span class="text-gray-400 text-xs">Skewness:</span>
-                    <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 rounded text-xs font-bold">
-                        {{ dist.skew_label }}
-                    </span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-gray-400 text-xs">Skew Value:</span>
-                    <span class="text-white text-xs font-mono">{{ dist.skewness }}</span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-gray-400 text-xs">Outliers:</span>
-                    <span class="text-orange-400 text-xs font-bold">
-                        {{ dist.outliers }} <span class="opacity-75">({{ dist.outlier_pct_val }}%)</span>
-                    </span>
-                </div>
-            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
     </div>
-</div>
-{% endif %}
+    {% endif %}
 
     <!-- Data Preview (Head) -->
     <div class="glass-dark rounded-xl overflow-hidden animate__animated animate__fadeInUp border border-white/5"

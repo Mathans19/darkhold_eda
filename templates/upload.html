@@ -68,7 +68,8 @@
 
     <!-- Hero Text -->
     <div class="text-center space-y-4 mb-12 animate-float">
-        <h1 class="text-5xl md:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-white to-scarlet drop-shadow-[0_0_15px_rgba(255,41,66,0.5)] leading-tight tracking-wider"
+        <h1 id="manifest-text"
+            class="text-5xl md:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-white to-scarlet drop-shadow-[0_0_15px_rgba(255,41,66,0.5)] leading-tight tracking-wider"
             style="font-family: 'Cinzel', serif;">
             Manifest Reality
         </h1>
@@ -278,5 +279,41 @@
 
         // Let the form submit normally
     });
+
+    // WandaVision Hex Glitch Effect for "Manifest Reality"
+    const manifestText = document.getElementById("manifest-text");
+    if (manifestText) {
+        const originalText = "MANIFEST REALITY";
+        const glitchChars = "!@#$%^&*()_+-=[]{}|;:,.<>?/~`ѦѪѬѮѰѲѴѶѸѺѼѾҀҊҌҎҐҒҔҖҘҚҜҞҠҢҤ";
+
+        function scrambleManifest() {
+            let iterations = 0;
+            const maxIterations = 8;
+
+            const interval = setInterval(() => {
+                manifestText.textContent = originalText
+                    .split("")
+                    .map((char, index) => {
+                        if (char === " ") return " ";
+                        if (iterations < maxIterations && Math.random() < 0.7) {
+                            return glitchChars[Math.floor(Math.random() * glitchChars.length)];
+                        }
+                        return originalText[index];
+                    })
+                    .join("");
+
+                iterations++;
+
+                if (iterations >= maxIterations) {
+                    clearInterval(interval);
+                    manifestText.textContent = originalText;
+                }
+            }, 50);
+        }
+
+        setInterval(() => {
+            scrambleManifest();
+        }, 15000); // Every 15 seconds
+    }
 </script>
 {% endblock %}

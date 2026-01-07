@@ -45,69 +45,82 @@
             <label class="text-xs uppercase text-gray-500 font-bold tracking-[0.2em] block">Manifestation Form</label>
             <div class="grid grid-cols-4 gap-3">
                 <button onclick="selectType('bar', this)"
-                    class="option-btn active p-3 rounded bg-black/40 border border-white/10 flex justify-center text-gray-400"
+                    class="option-btn active p-3 rounded bg-black/40 border border-white/10 flex flex-col items-center gap-1 text-gray-400"
                     title="Bar">
                     <i class="fa-solid fa-chart-bar text-xl"></i>
+                    <span class="text-[10px] uppercase tracking-wider">Bar</span>
                 </button>
                 <button onclick="selectType('line', this)"
-                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex justify-center text-gray-400"
+                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex flex-col items-center gap-1 text-gray-400"
                     title="Line">
                     <i class="fa-solid fa-chart-line text-xl"></i>
+                    <span class="text-[10px] uppercase tracking-wider">Line</span>
                 </button>
                 <button onclick="selectType('scatter', this)"
-                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex justify-center text-gray-400"
+                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex flex-col items-center gap-1 text-gray-400"
                     title="Scatter">
                     <i class="fa-solid fa-braille text-xl"></i>
+                    <span class="text-[10px] uppercase tracking-wider">Scatter</span>
                 </button>
                 <button onclick="selectType('pie', this)"
-                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex justify-center text-gray-400"
+                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex flex-col items-center gap-1 text-gray-400"
                     title="Pie">
                     <i class="fa-solid fa-chart-pie text-xl"></i>
+                    <span class="text-[10px] uppercase tracking-wider">Pie</span>
                 </button>
                 <button onclick="selectType('histogram', this)"
-                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex justify-center text-gray-400"
+                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex flex-col items-center gap-1 text-gray-400"
                     title="Histogram">
                     <i class="fa-solid fa-chart-column text-xl"></i>
+                    <span class="text-[10px] uppercase tracking-wider">Histogram</span>
                 </button>
                 <button onclick="selectType('boxplot', this)"
-                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex justify-center text-gray-400"
+                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex flex-col items-center gap-1 text-gray-400"
                     title="Box Plot">
                     <i class="fa-solid fa-box text-xl"></i>
+                    <span class="text-[10px] uppercase tracking-wider">Box</span>
                 </button>
                 <button onclick="selectType('countplot', this)"
-                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex justify-center text-gray-400"
+                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex flex-col items-center gap-1 text-gray-400"
                     title="Count Plot">
                     <i class="fa-solid fa-chart-simple text-xl"></i>
+                    <span class="text-[10px] uppercase tracking-wider">Count</span>
                 </button>
                 <button onclick="selectType('correlation', this)"
-                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex justify-center text-gray-400"
+                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex flex-col items-center gap-1 text-gray-400"
                     title="Correlation Heatmap">
                     <i class="fa-solid fa-table-cells text-xl"></i>
+                    <span class="text-[10px] uppercase tracking-wider">Heatmap</span>
                 </button>
                 <button onclick="selectType('missing', this)"
-                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex justify-center text-gray-400"
+                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex flex-col items-center gap-1 text-gray-400"
                     title="Missing Values">
                     <i class="fa-solid fa-eraser text-xl"></i>
+                    <span class="text-[10px] uppercase tracking-wider">Missing</span>
                 </button>
                 <button onclick="selectType('grouped_bar', this)"
-                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex justify-center text-gray-400"
+                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex flex-col items-center gap-1 text-gray-400"
                     title="Grouped Bar">
                     <i class="fa-solid fa-layer-group text-xl"></i>
+                    <span class="text-[10px] uppercase tracking-wider">Grouped</span>
                 </button>
                 <button onclick="selectType('violin', this)"
-                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex justify-center text-gray-400"
+                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex flex-col items-center gap-1 text-gray-400"
                     title="Violin Plot">
                     <i class="fa-solid fa-music text-xl"></i>
+                    <span class="text-[10px] uppercase tracking-wider">Violin</span>
                 </button>
                 <button onclick="selectType('pairplot', this)"
-                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex justify-center text-gray-400"
+                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex flex-col items-center gap-1 text-gray-400"
                     title="Pairwise Scatter">
                     <i class="fa-solid fa-circle-nodes text-xl"></i>
+                    <span class="text-[10px] uppercase tracking-wider">Pairwise</span>
                 </button>
                 <button onclick="selectType('timeseries', this)"
-                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex justify-center text-gray-400"
+                    class="option-btn p-3 rounded bg-black/40 border border-white/10 flex flex-col items-center gap-1 text-gray-400"
                     title="Time Series">
                     <i class="fa-solid fa-clock text-xl"></i>
+                    <span class="text-[10px] uppercase tracking-wider">Time</span>
                 </button>
             </div>
         </div>
@@ -157,27 +170,48 @@
 
     <!-- Chart Display -->
     <div
-        class="lg:col-span-8 glass-dark p-6 rounded-xl relative flex items-center justify-center animate__animated animate__fadeInRight border border-white/5 shadow-void">
+        class="lg:col-span-8 glass-dark p-6 rounded-xl relative animate__animated animate__fadeInRight border border-white/5 shadow-void">
 
         <!-- Magic Corner Accents -->
         <div class="absolute top-0 right-0 w-16 h-16 border-t-2 border-r-2 border-scarlet/30 rounded-tr-xl"></div>
         <div class="absolute bottom-0 left-0 w-16 h-16 border-b-2 border-l-2 border-scarlet/30 rounded-bl-xl"></div>
 
-        <!-- Placeholder/Loading -->
-        <div id="chart-placeholder" class="text-center space-y-6">
+        <div class="flex gap-4 h-full">
+            <!-- Chart Canvas -->
             <div
-                class="w-24 h-24 rounded-full border border-scarlet/20 flex items-center justify-center mx-auto relative">
-                <div class="absolute inset-0 rounded-full border-t-2 border-scarlet animate-spin"></div>
-                <i class="fa-solid fa-chart-area text-4xl text-scarlet/50"></i>
+                class="flex-1 min-w-0 flex items-center justify-center overflow-hidden bg-[#f8f9fa] rounded-lg shadow-inner border border-white/10">
+                <!-- Placeholder/Loading -->
+                <div id="chart-placeholder" class="text-center space-y-6">
+                    <div
+                        class="w-24 h-24 rounded-full border border-scarlet/20 flex items-center justify-center mx-auto relative">
+                        <div class="absolute inset-0 rounded-full border-t-2 border-scarlet animate-spin"></div>
+                        <i class="fa-solid fa-chart-area text-4xl text-scarlet/30"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-cinzel text-gray-800 mb-2">Void Canvas</h3>
+                        <p class="text-gray-500 tracking-wider font-inter text-sm">Select dimensions to collapse the
+                            wave function.</p>
+                    </div>
+                </div>
+
+                <canvas id="canvas" class="hidden w-full max-h-[420px] p-6"></canvas>
             </div>
-            <div>
-                <h3 class="text-xl font-cinzel text-white mb-2">Void Canvas</h3>
-                <p class="text-gray-500 tracking-wider font-inter text-sm">Select dimensions to collapse the wave
-                    function.</p>
+
+            <!-- Data Info Panel -->
+            <div id="data-info-panel"
+                class="hidden w-72 flex-shrink-0 bg-black/40 rounded-lg p-4 overflow-y-auto custom-scrollbar border border-white/10 shadow-inner">
+                <div class="flex items-center justify-between mb-3 border-b border-white/10 pb-2">
+                    <h4 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-list-ul text-scarlet"></i> Data Breakdown
+                    </h4>
+                    <button onclick="document.getElementById('data-info-panel').classList.add('hidden')"
+                        class="text-gray-500 hover:text-white transition-colors" title="Hide Breakdown">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div id="data-info-content" class="space-y-2"></div>
             </div>
         </div>
-
-        <canvas id="canvas" class="hidden w-full h-full p-4"></canvas>
     </div>
 </div>
 
@@ -185,10 +219,11 @@
     let currentChart = null;
     let chartType = 'bar';
 
-    // Chart.js Global Defaults
-    Chart.defaults.color = '#a0a0a0';
+    // Chart.js Global Defaults for Light Background
+    Chart.defaults.color = '#374151'; // Dark gray for text
     Chart.defaults.font.family = "'Inter', sans-serif";
-    Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.05)';
+    Chart.defaults.borderColor = 'rgba(0, 0, 0, 0.1)'; // Subtle dark grid lines
+    Chart.defaults.font.size = 11;
 
     function selectType(type, btn) {
         chartType = type;
@@ -254,10 +289,20 @@
 
             const ctx = canvas.getContext('2d');
 
-            // Scarlet Gradient
-            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-            gradient.addColorStop(0, 'rgba(255, 41, 66, 0.6)');
-            gradient.addColorStop(1, 'rgba(255, 41, 66, 0.05)');
+            // Standard Professional Color Palette
+            const standardColors = [
+                'rgba(54, 162, 235, 0.8)',   // Blue
+                'rgba(255, 99, 132, 0.8)',   // Red
+                'rgba(75, 192, 192, 0.8)',   // Teal
+                'rgba(255, 206, 86, 0.8)',   // Yellow
+                'rgba(153, 102, 255, 0.8)',  // Purple
+                'rgba(255, 159, 64, 0.8)',   // Orange
+                'rgba(46, 204, 113, 0.8)',   // Green
+                'rgba(231, 76, 60, 0.8)',    // Dark Red
+            ];
+
+            const primaryColor = 'rgba(54, 162, 235, 0.7)';
+            const borderColor = 'rgba(54, 162, 235, 1)';
 
             let config = {
                 type: 'bar',
@@ -266,20 +311,31 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { labels: { color: '#e0e0e0', font: { family: 'Cinzel', size: 12 } } },
+                        legend: {
+                            labels: {
+                                color: '#333',
+                                font: { family: 'Arial, sans-serif', size: 12 }
+                            }
+                        },
                         tooltip: {
-                            backgroundColor: 'rgba(5, 1, 2, 0.9)',
-                            titleColor: '#ff2942',
-                            titleFont: { family: 'Cinzel' },
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            titleFont: { family: 'Arial, sans-serif' },
                             bodyColor: '#fff',
-                            borderColor: 'rgba(255, 41, 66, 0.3)',
+                            borderColor: 'rgba(0, 0, 0, 0.3)',
                             borderWidth: 1,
                             padding: 10
                         }
                     },
                     scales: {
-                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
-                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } }
+                        y: {
+                            grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                            ticks: { color: '#666' }
+                        },
+                        x: {
+                            grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                            ticks: { color: '#666' }
+                        }
                     }
                 }
             };
@@ -293,11 +349,11 @@
                     datasets: [{
                         label: yVal || 'Count',
                         data: data.values,
-                        backgroundColor: chartType === 'line' ? 'transparent' : gradient,
-                        borderColor: '#ff2942',
+                        backgroundColor: chartType === 'line' ? 'transparent' : primaryColor,
+                        borderColor: borderColor,
                         borderWidth: 2,
                         tension: 0.4,
-                        fill: true
+                        fill: chartType === 'line' ? false : true
                     }]
                 };
             }
@@ -307,11 +363,8 @@
                     labels: data.labels,
                     datasets: [{
                         data: data.values,
-                        backgroundColor: [
-                            'rgba(255, 41, 66, 0.8)', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6',
-                            '#ec4899', '#6366f1', '#14b8a6', '#f97316', '#a855f7'
-                        ],
-                        borderColor: '#000',
+                        backgroundColor: standardColors,
+                        borderColor: '#fff',
                         borderWidth: 2
                     }]
                 };
@@ -323,8 +376,8 @@
                     datasets: [{
                         label: 'Frequency',
                         data: data.values,
-                        backgroundColor: gradient,
-                        borderColor: '#ff2942',
+                        backgroundColor: primaryColor,
+                        borderColor: borderColor,
                         borderWidth: 1,
                         barPercentage: 1.0,
                         categoryPercentage: 1.0
@@ -338,10 +391,10 @@
                     datasets: [{
                         label: xVal,
                         data: [[data.min, data.q1, data.median, data.q3, data.max]],
-                        backgroundColor: 'rgba(255, 41, 66, 0.4)',
-                        borderColor: '#ff2942',
+                        backgroundColor: 'rgba(54, 162, 235, 0.4)',
+                        borderColor: borderColor,
                         borderWidth: 2,
-                        outlierColor: '#fff',
+                        outlierColor: '#333',
                         itemRadius: 3
                     }]
                 };
@@ -355,7 +408,7 @@
                         backgroundColor: (ctx) => {
                             const val = ctx.raw.v;
                             const alpha = Math.abs(val);
-                            return val > 0 ? `rgba(255, 41, 66, ${alpha})` : `rgba(59, 130, 246, ${alpha})`;
+                            return val > 0 ? `rgba(54, 162, 235, ${alpha})` : `rgba(255, 99, 132, ${alpha})`;
                         },
                         width: ({ chart }) => (chart.chartArea || {}).width / data.labels.length - 1,
                         height: ({ chart }) => (chart.chartArea || {}).height / data.labels.length - 1
@@ -377,8 +430,8 @@
                     datasets: [{
                         label: 'Missing Values',
                         data: data.values,
-                        backgroundColor: 'rgba(255,99,132,0.6)',
-                        borderColor: 'rgba(255,99,132,1)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
                         borderWidth: 1
                     }]
                 };
@@ -391,8 +444,8 @@
                     datasets: [{
                         label: yVal,
                         data: data.values,
-                        borderColor: '#ff2942',
-                        backgroundColor: 'rgba(255, 41, 66, 0.1)',
+                        borderColor: borderColor,
+                        backgroundColor: 'rgba(54, 162, 235, 0.1)',
                         borderWidth: 2,
                         fill: true,
                         tension: 0
@@ -401,37 +454,30 @@
                 config.options.scales.x = {
                     type: 'time',
                     time: { unit: 'day' },
-                    grid: { color: 'rgba(255,255,255,0.05)' },
-                    ticks: { color: '#9ca3af' }
+                    grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                    ticks: { color: '#666' }
                 };
             }
             else if (chartType === 'grouped_bar') {
                 config.type = 'bar';
                 config.data = data; // data structure is already set in views.py
-                // Add colors
-                const colors = ['#ff2942', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
+                // Add standard colors
                 config.data.datasets.forEach((ds, i) => {
-                    ds.backgroundColor = colors[i % colors.length];
+                    ds.backgroundColor = standardColors[i % standardColors.length];
                 });
             }
             else if (chartType === 'violin') {
-                // Approximating Violin with BoxPlot capability or just disabling for now as strict violin is hard
-                // Using Bar/Histogram representation of distribution
                 config.type = 'bar';
-
-                // Correcting labels for JS: formatting bins to 2 decimal places
                 const formattedLabels = data.bins.slice(0, -1).map(b => b.toFixed(2));
-
                 config.data = {
-                    labels: formattedLabels, // Simulating
+                    labels: formattedLabels,
                     datasets: [{
                         label: 'Distribution Shape',
                         data: data.distribution,
-                        backgroundColor: gradient,
+                        backgroundColor: primaryColor,
                         tension: 0.4
                     }]
                 };
-                // NOTE: True violin plots are complex in Chart.js. Using dist histogram for now.
             }
             else if (chartType === 'pairplot') {
                 config.type = 'scatter';
@@ -439,23 +485,126 @@
                     datasets: [{
                         label: `${data.labels[0]} vs ${data.labels[1]}`,
                         data: data.x.map((x, i) => ({ x: x, y: data.y[i] })),
-                        backgroundColor: '#ff2942'
+                        backgroundColor: borderColor
                     }]
                 };
                 config.options.scales = {
-                    x: { title: { display: true, text: data.labels[0], color: '#fff' } },
-                    y: { title: { display: true, text: data.labels[1], color: '#fff' } }
+                    x: { title: { display: true, text: data.labels[0], color: '#333' } },
+                    y: { title: { display: true, text: data.labels[1], color: '#333' } }
                 };
             }
 
             // Render
             currentChart = new Chart(ctx, config);
 
+            // Populate Data Info Panel
+            populateDataInfo(chartType, data, config);
+
         } catch (e) {
             alert("Visualization Collapse: " + e.message);
         } finally {
             btn.innerHTML = originalText;
             btn.disabled = false;
+        }
+    }
+
+    function populateDataInfo(chartType, data, config) {
+        const panel = document.getElementById('data-info-panel');
+        const content = document.getElementById('data-info-content');
+
+        // Clear previous content
+        content.innerHTML = '';
+
+        let items = [];
+
+        // Extract data based on chart type
+        if (chartType === 'pie' || chartType === 'bar' || chartType === 'histogram' || chartType === 'countplot') {
+            const labels = data.labels || [];
+            const values = data.values || [];
+            const total = values.reduce((sum, val) => sum + val, 0);
+
+            items = labels.map((label, i) => ({
+                label: label,
+                value: values[i],
+                percentage: total > 0 ? ((values[i] / total) * 100).toFixed(1) : 0,
+                color: config.data.datasets[0].backgroundColor instanceof Array
+                    ? config.data.datasets[0].backgroundColor[i]
+                    : config.data.datasets[0].backgroundColor
+            }));
+
+            // --- DYNAMIC FILTERING ---
+            // 1. Filter out empty items (Zero values) - especially for histograms
+            items = items.filter(item => item.value > 0);
+
+            // 2. Limit to top 15 items to avoid list explosion
+            if (items.length > 15) {
+                const otherItems = items.slice(15);
+                const otherValue = otherItems.reduce((sum, item) => sum + item.value, 0);
+                const otherPercentage = ((otherValue / total) * 100).toFixed(1);
+
+                items = items.slice(0, 15);
+                items.push({
+                    label: 'OTHERS (' + otherItems.length + ' more)',
+                    value: otherValue,
+                    percentage: otherPercentage,
+                    color: '#4b5563' // Neutral gray
+                });
+            }
+        }
+        // ... (rest of the logic for other chart types)
+        else if (chartType === 'line' || chartType === 'scatter' || chartType === 'timeseries') {
+            const values = data.values || [];
+            const min = Math.min(...values);
+            const max = Math.max(...values);
+            const avg = values.reduce((sum, val) => sum + val, 0) / values.length;
+
+            content.innerHTML = `
+                <div class="text-xs space-y-2">
+                    <div class="flex justify-between"><span class="text-gray-400">Min:</span><span class="text-white font-bold">${min.toFixed(2)}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-400">Max:</span><span class="text-white font-bold">${max.toFixed(2)}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-400">Avg:</span><span class="text-white font-bold">${avg.toFixed(2)}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-400">Count:</span><span class="text-white font-bold">${values.length}</span></div>
+                </div>
+            `;
+            panel.classList.remove('hidden');
+            return;
+        } else if (chartType === 'boxplot') {
+            content.innerHTML = `
+                <div class="text-xs space-y-2">
+                    <div class="flex justify-between"><span class="text-gray-400">Min:</span><span class="text-white font-bold">${data.min.toFixed(2)}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-400">Q1:</span><span class="text-white font-bold">${data.q1.toFixed(2)}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-400">Median:</span><span class="text-white font-bold">${data.median.toFixed(2)}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-400">Q3:</span><span class="text-white font-bold">${data.q3.toFixed(2)}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-400">Max:</span><span class="text-white font-bold">${data.max.toFixed(2)}</span></div>
+                </div>
+            `;
+            panel.classList.remove('hidden');
+            return;
+        } else {
+            panel.classList.add('hidden'); // Hide for complex matrix/correlation for now
+            return;
+        }
+
+        // Render items for categorical charts
+        if (items.length > 0) {
+            panel.classList.remove('hidden');
+            items.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'flex items-center gap-2 text-[11px] py-1.5 border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors px-1 rounded';
+                itemDiv.innerHTML = `
+                    <div class="w-2.5 h-2.5 rounded-sm flex-shrink-0" style="background-color: ${item.color}"></div>
+                    <div class="flex-1 min-w-0">
+                        <div class="text-gray-200 truncate font-medium">${item.label}</div>
+                        <div class="text-gray-400 text-[10px] flex justify-between">
+                            <span>Count: ${item.value}</span>
+                            <span class="text-scarlet/80">${item.percentage}%</span>
+                        </div>
+                    </div>
+                `;
+                content.appendChild(itemDiv);
+            });
+        } else {
+            panel.classList.add('hidden');
         }
     }
 

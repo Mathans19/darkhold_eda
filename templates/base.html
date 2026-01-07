@@ -203,12 +203,12 @@
             position: absolute;
             width: 50vw;
             height: 50vw;
-            background: radial-gradient(circle, var(--color-scarlet), transparent 70%);
+            background: radial-gradient(circle, var(--color-blood) 10%, #000 80%);
             border-radius: 50%;
             opacity: 0;
             transform: scale(0);
-            mix-blend-mode: screen;
-            filter: blur(40px);
+            mix-blend-mode: normal;
+            /* Darker, black-embedded scarlet look */
         }
 
         .manifest-text {
@@ -268,6 +268,17 @@
         }
 
         .nav-link:hover::after {
+            width: 100%;
+            left: 0;
+        }
+
+        /* Active Page Highlight */
+        .nav-link.active {
+            color: var(--color-scarlet);
+            text-shadow: 0 0 10px var(--color-scarlet);
+        }
+
+        .nav-link.active::after {
             width: 100%;
             left: 0;
         }
@@ -403,6 +414,209 @@
             opacity: 0.4;
             cursor: pointer !important;
         }
+
+        /* --- New Effects --- */
+        #vignette-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            background: radial-gradient(circle, transparent 40%, rgba(0, 0, 0, 0.8) 100%);
+        }
+
+        #hex-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            pointer-events: none;
+            opacity: 0.1;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cg fill-rule='evenodd'%3E%3Cg id='hexagons' fill='%23ff2942' fill-opacity='1' fill-rule='nonzero'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.3zM15 0v7.5L27.99 15H28v-2.31h-.01L17 6.35V0h-2zm0 49v-7.5l12.99-7.5H28v2.31h-.01L17 42.15V49h-2z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        #cursor-trail {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9000;
+            pointer-events: none;
+        }
+
+        /* Side Panel Guide - Hidden by default to prevent flicker */
+        #guide-panel {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 5000;
+            display: flex;
+            align-items: flex-end;
+            pointer-events: none;
+            opacity: 0;
+            visibility: hidden;
+            /* Ensure it doesn't block clicks even if keyframe animation fails */
+        }
+
+        .guide-content {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            position: relative;
+        }
+
+        .guide-char-container {
+            pointer-events: none;
+        }
+
+        /* Performance Optimizations for Manifestation Ritual */
+        .manifest-book,
+        .chaos-nova,
+        .manifest-text {
+            will-change: transform, opacity;
+        }
+
+        .guide-char-container img {
+            height: 350px;
+            filter: drop-shadow(5px 5px 15px rgba(0, 0, 0, 0.8));
+            transition: all 0.5s var(--ritual-ease);
+        }
+
+        .guide-char-container img:hover {
+            transform: scale(1.05) translateY(-5px);
+            filter: drop-shadow(5px 5px 25px rgba(255, 41, 66, 0.4));
+        }
+
+        .guide-bubble {
+            background: linear-gradient(135deg, rgba(20, 0, 0, 0.95), rgba(50, 0, 0, 0.9));
+            border: 2px solid var(--color-scarlet);
+            color: #fff;
+            padding: 1.5rem;
+            border-radius: 20px 20px 0 20px;
+            font-family: 'Cinzel', serif;
+            max-width: 280px;
+            margin-bottom: -10px;
+            margin-right: 50px;
+            box-shadow: 0 0 20px rgba(255, 41, 66, 0.2);
+            position: relative;
+            transform-origin: bottom right;
+            animation: float-bubble 4s ease-in-out infinite;
+            text-shadow: 0 0 5px var(--color-scarlet);
+            z-index: 5001;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            pointer-events: auto;
+        }
+
+        .guide-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            right: 0;
+            width: 20px;
+            height: 20px;
+            background: var(--color-scarlet);
+            clip-path: polygon(100% 0, 0 0, 100% 100%);
+        }
+
+        @keyframes float-bubble {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+
+        /* Energy Blast Styles */
+        .energy-blast-core {
+            position: fixed;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #fff, var(--color-scarlet));
+            pointer-events: none;
+            z-index: 9999;
+            mix-blend-mode: screen;
+        }
+
+        .energy-blast-ring {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid var(--color-scarlet);
+            box-shadow: 0 0 20px var(--color-scarlet);
+            pointer-events: none;
+            z-index: 9998;
+        }
+
+        .chaos-particle {
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            box-shadow: 0 0 10px var(--color-scarlet);
+        }
+
+        /* Scarlet EDA Slide Animation */
+        #brand-container {
+            position: relative;
+            transform: translateX(0);
+            transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        #brand-container.move-left {
+            transform: translateX(-60px);
+        }
+
+        /* WandaVision Hex Glitch Effect */
+        @keyframes hex-glitch {
+
+            0%,
+            100% {
+                transform: translate(0);
+                text-shadow: 0 0 0 transparent;
+            }
+
+            10% {
+                transform: translate(-2px, 1px);
+                text-shadow: 2px 0 0 #ff0000, -2px 0 0 #00ffff;
+            }
+
+            20% {
+                transform: translate(2px, -1px);
+                text-shadow: -2px 0 0 #ff0000, 2px 0 0 #00ffff;
+            }
+
+            30% {
+                transform: translate(-1px, 2px);
+                text-shadow: 3px 0 0 #ff0000, -3px 0 0 #00ffff;
+            }
+
+            40% {
+                transform: translate(1px, -2px);
+                text-shadow: -1px 0 0 #ff0000, 1px 0 0 #00ffff;
+            }
+
+            50% {
+                transform: translate(0);
+                text-shadow: 0 0 10px var(--color-scarlet);
+                filter: brightness(1.5);
+            }
+        }
+
+        #scarlet-text.glitching {
+            animation: hex-glitch 0.6s ease-in-out;
+        }
     </style>
     {% block extra_head %}{% endblock %}
 </head>
@@ -430,30 +644,34 @@
     <nav class="glass-dark sticky top-0 z-50 border-b border-white/5">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-20">
-                <a href="{% url 'home' %}" class="flex-shrink-0 flex items-center gap-3 group ritual-nav">
-                    <div
-                        class="w-10 h-10 rounded-full border border-scarlet/50 flex items-center justify-center shadow-neon group-hover:scale-110 transition-all duration-500 bg-void/30">
-                        <i class="fa-solid fa-book-sparkles text-scarlet text-lg group-hover:animate-pulse"></i>
+                <div id="brand-container" class="flex-shrink-0 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full border border-scarlet/50 flex items-center justify-center shadow-neon bg-void/30"
+                        style="box-shadow: 0 0 15px rgba(255, 41, 66, 0.6), 0 0 30px rgba(255, 41, 66, 0.3);">
+                        <!-- Custom M-shaped Wanda Crown (2 peaks) -->
+                        <svg width="20" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4 18L7 6L12 12L17 6L20 18M7 6V4M17 6V4" stroke="#ff2942" stroke-width="2.5"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
                     </div>
-                    <span
-                        class="text-2xl font-bold tracking-widest uppercase text-white group-hover:text-scarlet transition-all duration-500 font-cinzel">Scarlet
+                    <span id="scarlet-text"
+                        class="text-2xl font-bold tracking-widest uppercase text-white font-cinzel">Scarlet
                         EDA</span>
-                </a>
+                </div>
 
                 <div class="hidden md:block">
                     <div class="ml-10 flex items-baseline space-x-8">
                         <a href="{% url 'upload' %}"
-                            class="ritual-nav nav-link px-3 py-2 text-sm font-bold uppercase">Upload</a>
+                            class="ritual-nav nav-link px-3 py-2 text-sm font-bold uppercase {% if request.resolver_match.url_name == 'upload' or request.resolver_match.url_name == 'home' %}active{% endif %}">Upload</a>
 
                         {% if request.session.dataset_id %}
                         <a href="{% url 'report' %}"
-                            class="ritual-nav nav-link px-3 py-2 text-sm font-bold uppercase">Report</a>
+                            class="ritual-nav nav-link px-3 py-2 text-sm font-bold uppercase {% if request.resolver_match.url_name == 'report' %}active{% endif %}">Report</a>
                         <a href="{% url 'clean' %}"
-                            class="ritual-nav nav-link px-3 py-2 text-sm font-bold uppercase">Clean</a>
+                            class="ritual-nav nav-link px-3 py-2 text-sm font-bold uppercase {% if request.resolver_match.url_name == 'clean' %}active{% endif %}">Clean</a>
                         <a href="{% url 'visualize' %}"
-                            class="ritual-nav nav-link px-3 py-2 text-sm font-bold uppercase">Visualize</a>
+                            class="ritual-nav nav-link px-3 py-2 text-sm font-bold uppercase {% if request.resolver_match.url_name == 'visualize' %}active{% endif %}">Visualize</a>
                         <a href="{% url 'ai_insights' %}"
-                            class="ritual-nav nav-link px-3 py-2 text-sm font-bold uppercase">Insights</a>
+                            class="ritual-nav nav-link px-3 py-2 text-sm font-bold uppercase {% if request.resolver_match.url_name == 'ai_insights' %}active{% endif %}">Insights</a>
                         {% else %}
                         <span class="px-3 py-2 text-sm font-bold uppercase locked-nav"
                             data-reason="Manifest a reality fragment first to access the Report.">Report</span>
@@ -484,6 +702,23 @@
         <div class="chaos-nova" id="ritual-nova"></div>
         <div class="manifest-text" id="ritual-text">INSCRIBING REALITY...</div>
     </div>
+
+    <!-- Side Panel Character Guide -->
+    <div id="guide-panel">
+        <div class="guide-content">
+            <div class="guide-bubble" id="guide-message">
+                Welcome to the Hex.
+            </div>
+            <div class="guide-char-container">
+                <img id="guide-img" src="{% static 'images/char_scarlet_witch.png' %}" alt="Guide">
+            </div>
+        </div>
+    </div>
+
+    <!-- Background Effects -->
+    <div id="vignette-overlay"></div>
+    <div id="hex-bg"></div>
+    <canvas id="cursor-trail"></canvas>
 
     <!-- Footer -->
     <footer class="glass-dark border-t border-white/5 mt-auto">
@@ -606,8 +841,8 @@
                 tl.to(book, { y: "-=10", duration: 0.4, yoyo: true, ease: "sine.inOut" }, 0.15);
 
 
-                // Sudden Reality Nova (The Wipe)
-                tl.to(nova, { opacity: 1, scale: 12, duration: 0.5, ease: "power2.in" }, 0.2);
+                // Sudden Reality Nova (The Wipe) - DISABLED as per user request
+                // tl.to(nova, { opacity: 1, scale: 12, duration: 0.5, ease: "power2.in" }, 0.2);
 
                 tl.to(text, { scale: 1.5, opacity: 0, duration: 0.6, ease: "power2.in" }, 1.4);
             }
@@ -640,7 +875,9 @@
             fragment.style.left = `${Math.random() * 100}vw`;
             fragment.style.top = `${Math.random() * 100}vh`;
             fragment.style.fontSize = `${Math.random() * 20 + 20}px`;
-            fragment.style.filter = `blur(${Math.random() * 2}px) drop-shadow(0 0 15px var(--color-scarlet))`;
+            fragment.style.fontSize = `${Math.random() * 20 + 20}px`;
+            // Removed heavy filter to reduce lag
+            fragment.style.filter = `blur(${Math.random() * 1}px)`;
 
             realityLayer.appendChild(fragment);
 
@@ -659,34 +896,108 @@
         }
         setInterval(spawnFragment, 1200);
 
-        // Particle System
+        // Particle System - Floating Runes
         const canvas = document.getElementById('particle-canvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
         function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+
+        // Mystical rune symbols (using Unicode characters)
+        const runeSymbols = ['ᚠ', 'ᚢ', 'ᚦ', 'ᚨ', 'ᚱ', 'ᚲ', 'ᚷ', 'ᚹ', 'ᚺ', 'ᚾ', 'ᛁ', 'ᛃ', 'ᛇ', 'ᛈ', 'ᛉ', 'ᛊ', 'ᛏ', 'ᛒ', 'ᛖ', 'ᛗ', 'ᛚ', 'ᛜ', 'ᛞ', 'ᛟ'];
+
         class Particle {
             constructor() {
-                this.x = Math.random() * canvas.width; this.y = Math.random() * canvas.height;
-                this.vx = (Math.random() - 0.5) * 0.2; this.vy = (Math.random() - 0.5) * 0.2;
-                this.size = Math.random() * 1;
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 0.3; // Slower horizontal drift
+                this.vy = -Math.random() * 0.2 - 0.1; // Upward float (like ash)
+                this.size = Math.random() * 12 + 8; // Font size
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.02;
+                this.opacity = Math.random() * 0.3 + 0.1; // Subtle opacity
+                this.symbol = runeSymbols[Math.floor(Math.random() * runeSymbols.length)];
             }
             update() {
-                this.x += this.vx; this.y += this.vy;
-                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
-                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+                this.x += this.vx;
+                this.y += this.vy;
+                this.rotation += this.rotationSpeed;
+
+                // Wrap around edges
+                if (this.x < -20) this.x = canvas.width + 20;
+                if (this.x > canvas.width + 20) this.x = -20;
+                if (this.y < -20) this.y = canvas.height + 20; // Reset to bottom when reaching top
             }
-            draw() { ctx.fillStyle = 'rgba(255, 41, 66, 0.1)'; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.font = `${this.size}px serif`;
+                ctx.fillStyle = `rgba(255, 41, 66, ${this.opacity})`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.symbol, 0, 0);
+                ctx.restore();
+            }
         }
-        function initParticles() { for (let i = 0; i < 80; i++) particles.push(new Particle()); }
+
+        function initParticles() {
+            for (let i = 0; i < 50; i++) particles.push(new Particle());
+        }
         function animateParticles() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             for (let i = 0; i < particles.length; i++) {
-                particles[i].update(); particles[i].draw();
+                particles[i].update();
+                particles[i].draw();
             }
             requestAnimationFrame(animateParticles);
         }
         window.addEventListener('resize', resize);
         resize(); initParticles(); animateParticles();
+    </script>
+
+    <script>
+        // Slide Scarlet EDA to the left on page load
+        const brand = document.getElementById("brand-container");
+        window.addEventListener("load", () => {
+            setTimeout(() => {
+                brand.classList.add("move-left");
+            }, 300);
+        });
+        // WandaVision Hex Glitch Effect - Every 6 seconds (TRUE TEXT GLITCH)
+        const scarletText = document.getElementById("scarlet-text");
+        const originalText = "SCARLET EDA";
+        const glitchChars = "!@#$%^&*()_+-=[]{}|;:,.<>?/~`ѦѪѬѮѰѲѴѶѸѺѼѾҀҊҌҎҐҒҔҖҘҚҜҞҠҢҤ";
+
+        function scrambleText() {
+            let iterations = 0;
+            const maxIterations = 8;
+
+            const interval = setInterval(() => {
+                scarletText.textContent = originalText
+                    .split("")
+                    .map((char, index) => {
+                        if (char === " ") return " ";
+                        if (iterations < maxIterations && Math.random() < 0.7) {
+                            return glitchChars[Math.floor(Math.random() * glitchChars.length)];
+                        }
+                        return originalText[index];
+                    })
+                    .join("");
+
+                iterations++;
+
+                if (iterations >= maxIterations) {
+                    clearInterval(interval);
+                    scarletText.textContent = originalText;
+                    scarletText.classList.remove("glitching");
+                }
+            }, 50); // Fast scramble
+        }
+
+        setInterval(() => {
+            scarletText.classList.add("glitching");
+            scrambleText();
+        }, 15000); // Every 15 seconds
     </script>
 
     <!-- Global Motion Rituals -->
@@ -696,6 +1007,7 @@
             init() {
                 this.setupInputReactivity();
                 this.setupFocusBreathing();
+                if (typeof GuideRitual !== 'undefined') GuideRitual.init();
             },
             setupInputReactivity() {
                 const interactive = document.querySelectorAll('button, input, .btn-energy, .nav-link, .ritual-nav');
@@ -716,7 +1028,7 @@
             }
         };
 
-        // Global Reality Modulation: High-Impact Energy Blast
+        // Global Reality Modulation: High-Impact Energy Blast & Chaos Particles
         const EnergyRitual = {
             spawnBlast(x, y) {
                 const core = document.createElement('div');
@@ -751,6 +1063,37 @@
                     duration: 0.6,
                     ease: "power2.out"
                 }, 0.05);
+
+                // Spawn Particles
+                for (let i = 0; i < 12; i++) {
+                    this.spawnChaosParticle(x, y);
+                }
+            },
+            spawnChaosParticle(x, y) {
+                const p = document.createElement('div');
+                p.className = 'chaos-particle';
+                const size = Math.random() * 8 + 4;
+                p.style.width = `${size}px`;
+                p.style.height = `${size}px`;
+                p.style.left = `${x}px`;
+                p.style.top = `${y}px`;
+                p.style.background = Math.random() > 0.5 ? 'var(--color-scarlet)' : '#fff';
+                document.body.appendChild(p);
+
+                const angle = Math.random() * Math.PI * 2;
+                const distance = Math.random() * 100 + 50;
+                const dx = Math.cos(angle) * distance;
+                const dy = Math.sin(angle) * distance;
+
+                gsap.to(p, {
+                    x: dx,
+                    y: dy,
+                    opacity: 0,
+                    scale: 0,
+                    duration: Math.random() * 0.5 + 0.3,
+                    ease: "power2.out",
+                    onComplete: () => p.remove()
+                });
             }
         };
 
@@ -763,7 +1106,128 @@
         window.addEventListener('DOMContentLoaded', () => MotionRitual.init());
 
         // Initial drift setup handled in spawnFragment for new elements
+
+        // Guide Ritual
+        const GuideRitual = {
+            guides: {
+                'home': { char: 'wanda.png', msg: "Welcome to the Hex. Create your own reality here." },
+                'upload': { char: 'wanda.png', msg: "Upload your data. Don't worry, I can handle the chaos." },
+                'clean': { char: 'agatha.png', msg: "This data is a mess. Let's fix it, shall we?" },
+                'visualize': { char: 'vision.png', msg: "Visualization reveals the hidden truths within the numbers." },
+                'report': { char: 'wiccan2.png', msg: "I see... patterns. The data foretells an interesting outcome." },
+                'ai-insights': { char: 'speed.png', msg: "Done! I've already analyzed it. Try to keep up!" }
+            },
+            init() {
+                const path = window.location.pathname.replace(/^\/|\/$/g, '') || 'home';
+                let guideKey = 'home';
+
+                // Simple matching
+                if (path.includes('upload')) guideKey = 'upload';
+                else if (path.includes('clean')) guideKey = 'clean';
+                else if (path.includes('visualize')) guideKey = 'visualize';
+                else if (path.includes('report')) guideKey = 'report';
+                else if (path.includes('ai-insights') || path.includes('ai_insights')) guideKey = 'ai-insights';
+
+                const data = this.guides[guideKey];
+                const img = document.getElementById('guide-img');
+                const msg = document.getElementById('guide-message');
+
+                if (data && img && msg) {
+                    img.src = `{% static 'images/' %}${data.char}`;
+                    msg.innerText = data.msg;
+
+                    // Page-specific glow colors
+                    const glowColors = {
+                        'home': 'rgba(255, 41, 66, 0.8)',      // Red
+                        'upload': 'rgba(255, 41, 66, 0.8)',    // Red
+                        'report': 'rgba(66, 135, 245, 0.8)',   // Blue
+                        'clean': 'rgba(168, 85, 247, 0.8)',    // Purple
+                        'visualize': 'rgba(250, 204, 21, 0.8)', // Yellow
+                        'ai-insights': 'rgba(34, 197, 94, 0.8)' // Green
+                    };
+
+                    const glowColor = glowColors[guideKey];
+                    img.style.filter = `drop-shadow(0 0 20px ${glowColor}) drop-shadow(0 0 40px ${glowColor})`;
+
+                    // Entrance & Exit Ritual
+                    const tl = gsap.timeline();
+                    tl.fromTo("#guide-panel",
+                        { x: 300, autoAlpha: 0 },
+                        { x: 0, autoAlpha: 1, duration: 0.8, ease: "power3.out", delay: 0.5 }
+                    )
+                        .to("#guide-panel", {
+                            x: 400,
+                            autoAlpha: 0,
+                            duration: 0.8,
+                            ease: "power3.in"
+                        }, "+=2");
+                }
+            }
+        };
+
+        // Cursor Trail System (Canvas 2 - Foreground)
+        const trailCanvas = document.getElementById('cursor-trail');
+        const trailCtx = trailCanvas.getContext('2d');
+        let trailParticles = [];
+        let mouse = { x: 0, y: 0 };
+        function resizeTrail() { trailCanvas.width = window.innerWidth; trailCanvas.height = window.innerHeight; }
+
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+            // Reduced from 3 to 1 particle per move for subtle effect
+            trailParticles.push(new TrailParticle(mouse.x, mouse.y));
+        });
+
+        class TrailParticle {
+            constructor(x, y) {
+                // Reduced spread from 10 to 3
+                this.x = x + (Math.random() - 0.5) * 3;
+                this.y = y + (Math.random() - 0.5) * 3;
+                // Smaller particles (1-2 instead of 1-3)
+                this.size = Math.random() * 1 + 0.5;
+                // Slower drift
+                this.speedX = (Math.random() - 0.5) * 0.5;
+                this.speedY = (Math.random() - 0.5) * 0.5;
+                this.color = `rgba(255, 41, 66, ${Math.random()})`;
+                this.life = 1.0;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                // Faster fade (0.04 instead of 0.02)
+                this.life -= 0.04;
+                if (this.life < 0) this.life = 0;
+            }
+            draw() {
+                trailCtx.fillStyle = `rgba(255, 41, 66, ${this.life})`;
+                trailCtx.beginPath();
+                trailCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                trailCtx.fill();
+            }
+        }
+
+        function animateTrail() {
+            trailCtx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
+            for (let i = 0; i < trailParticles.length; i++) {
+                trailParticles[i].update();
+                trailParticles[i].draw();
+                if (trailParticles[i].life <= 0) {
+                    trailParticles.splice(i, 1);
+                    i--;
+                }
+            }
+            requestAnimationFrame(animateTrail);
+        }
+
+        window.addEventListener('resize', () => { resize(); resizeTrail(); });
+        resizeTrail(); animateTrail();
+
+        // Enhance Particles with Chaos
+        // (Existing particle code is in previous script block, but we init trail here)
     </script>
+
+
 
     {% block extra_scripts %}{% endblock %}
 </body>

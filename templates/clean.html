@@ -84,67 +84,112 @@
 <div class="h-[calc(100vh-140px)] flex flex-col animate__animated animate__fadeIn">
 
     <!-- Toolbar -->
-    <div class="glass-dark p-4 rounded-xl mb-6 flex flex-wrap items-center gap-4 sticky top-0 z-30 shadow-neon">
-        <h2 class="text-xl font-bold text-white mr-4 flex items-center gap-3">
-            <i class="fa-solid fa-wand-magic-sparkles text-scarlet animate-pulse"></i>
-            <span style="font-family: 'Cinzel', serif;">Transformation Studio</span>
-        </h2>
+    <div
+        class="glass-dark p-4 rounded-xl mb-6 flex flex-wrap items-center gap-y-4 gap-x-2 sticky top-0 z-30 shadow-neon">
+        <div class="flex items-center mr-4">
+            <h2 class="text-xl font-bold text-white flex items-center gap-3">
+                <i class="fa-solid fa-wand-magic-sparkles text-scarlet animate-pulse"></i>
+                <span style="font-family: 'Cinzel', serif;">Studio</span>
+            </h2>
+        </div>
+
+        <!-- History Controls -->
+        <div class="flex items-center gap-2 bg-black/40 p-1 rounded-lg border border-white/10">
+            <form method="post" class="inline">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="undo">
+                <button type="submit" class="p-2 hover:text-scarlet transition-colors text-white/70"
+                    title="Undo Last Ritual">
+                    <i class="fa-solid fa-rotate-left text-lg"></i>
+                </button>
+            </form>
+            <form method="post" class="inline">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="redo">
+                <button type="submit" class="p-2 hover:text-scarlet transition-colors text-white/70"
+                    title="Redo Ritual">
+                    <i class="fa-solid fa-rotate-right text-lg"></i>
+                </button>
+            </form>
+        </div>
 
         <div class="h-8 w-px bg-white/10 mx-2"></div>
 
-        <!-- Action Buttons -->
-        <button onclick="openModal('rename-modal')" class="btn-energy text-sm px-4 py-2 flex items-center gap-2">
-            <i class="fa-solid fa-pen-to-square"></i> Rename
-        </button>
+        <!-- Action Groups -->
+        <div class="flex flex-wrap items-center gap-2">
+            <!-- Group: Schema -->
+            <div class="flex items-center gap-1.5 p-1 rounded-lg bg-white/5 border border-white/5">
+                <button onclick="openModal('rename-modal')"
+                    class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5" title="Rename Column">
+                    <i class="fa-solid fa-pen-to-square"></i> Rename
+                </button>
+                <button onclick="openModal('drop-modal')"
+                    class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5" title="Drop Column">
+                    <i class="fa-solid fa-trash-can"></i> Drop
+                </button>
+                <button onclick="openModal('convert-dtype-modal')"
+                    class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5" title="Change Data Type">
+                    <i class="fa-solid fa-arrows-rotate"></i> Type
+                </button>
+            </div>
 
-        <button onclick="openModal('drop-modal')" class="btn-energy text-sm px-4 py-2 flex items-center gap-2">
-            <i class="fa-solid fa-trash-can"></i> Drop
-        </button>
+            <!-- Group: Cleaning -->
+            <div class="flex items-center gap-1.5 p-1 rounded-lg bg-white/5 border border-white/5">
+                <button onclick="openModal('fill-modal')"
+                    class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5" title="Fill Nulls">
+                    <i class="fa-solid fa-fill-drip"></i> Fill
+                </button>
+                <form method="post" class="inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="drop_duplicates">
+                    <button type="submit" class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5"
+                        onclick="return confirm('Prune timelines (remove duplicates)?')" title="Remove Duplicates">
+                        <i class="fa-solid fa-clone"></i> Dups
+                    </button>
+                </form>
+                <button onclick="openModal('outliers-modal')"
+                    class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5"
+                    title="Detect & Handle Outliers">
+                    <i class="fa-solid fa-compass-drafting"></i> Outliers
+                </button>
+            </div>
 
-        <button onclick="openModal('fill-modal')" class="btn-energy text-sm px-4 py-2 flex items-center gap-2">
-            <i class="fa-solid fa-fill-drip"></i> Fill Void
-        </button>
+            <!-- Group: Manipulation -->
+            <div class="flex items-center gap-1.5 p-1 rounded-lg bg-white/5 border border-white/5">
+                <button onclick="openModal('filter-rows-modal')"
+                    class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5" title="Filter Rows">
+                    <i class="fa-solid fa-filter"></i> Filter
+                </button>
+                <button onclick="openModal('replace-value-modal')"
+                    class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5"
+                    title="Replace Specific Values">
+                    <i class="fa-solid fa-exchange-alt"></i> Replace
+                </button>
+                <button onclick="openModal('group-rare-modal')"
+                    class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5"
+                    title="Group Infrequent Categories">
+                    <i class="fa-solid fa-layer-group"></i> Group
+                </button>
+            </div>
 
-        <form method="post" class="inline">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="drop_duplicates">
-            <button type="submit" class="btn-energy text-sm px-4 py-2 flex items-center gap-2"
-                onclick="return confirm('Prune timelines (remove duplicates)? This cannot be undone.')">
-                <i class="fa-solid fa-clone"></i> Purge Duplicates
-            </button>
-        </form>
+            <!-- Group: Feature Engineering -->
+            <div class="flex items-center gap-1.5 p-1 rounded-lg bg-white/5 border border-white/5">
+                <button onclick="openModal('clean-text-modal')"
+                    class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5" title="Clean String Content">
+                    <i class="fa-solid fa-broom"></i> Text
+                </button>
+                <button onclick="openModal('datetime-extract-modal')"
+                    class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5"
+                    title="Extract Features from Date">
+                    <i class="fa-solid fa-calendar-days"></i> Dates
+                </button>
+            </div>
+        </div>
 
-        <button onclick="openModal('convert-dtype-modal')" class="btn-energy text-sm px-4 py-2 flex items-center gap-2">
-            <i class="fa-solid fa-arrows-rotate"></i> Convert Type
-        </button>
-
-        <button onclick="openModal('clean-text-modal')" class="btn-energy text-sm px-4 py-2 flex items-center gap-2">
-            <i class="fa-solid fa-broom"></i> Clean Text
-        </button>
-
-        <button onclick="openModal('replace-value-modal')" class="btn-energy text-sm px-4 py-2 flex items-center gap-2">
-            <i class="fa-solid fa-exchange-alt"></i> Replace
-        </button>
-
-        <button onclick="openModal('filter-rows-modal')" class="btn-energy text-sm px-4 py-2 flex items-center gap-2">
-            <i class="fa-solid fa-filter"></i> Filter
-        </button>
-
-        <button onclick="openModal('outliers-modal')" class="btn-energy text-sm px-4 py-2 flex items-center gap-2">
-            <i class="fa-solid fa-chart-scatter"></i> Outliers
-        </button>
-
-        <button onclick="openModal('group-rare-modal')" class="btn-energy text-sm px-4 py-2 flex items-center gap-2">
-            <i class="fa-solid fa-layer-group"></i> Group Rare
-        </button>
-
-        <button onclick="openModal('datetime-extract-modal')"
-            class="btn-energy text-sm px-4 py-2 flex items-center gap-2">
-            <i class="fa-solid fa-calendar-days"></i> Extract Date
-        </button>
-
-        <div class="ml-auto text-xs text-gray-500 uppercase tracking-wider font-cinzel">
-            Viewing <span class="text-scarlet font-bold">{{ total_rows }}</span> Timelines
+        <div class="ml-auto flex items-center gap-4">
+            <div class="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-cinzel">
+                <span class="text-scarlet font-bold">{{ total_rows }}</span> Records Loaded
+            </div>
         </div>
     </div>
 
@@ -171,7 +216,7 @@
         class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
         <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
         </div>
-        <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Rename Reality
+        <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Rename Column
         </h3>
         <form method="post">
             {% csrf_token %}
@@ -210,8 +255,8 @@
         class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
         <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
         </div>
-        <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Erase from
-            Existence</h3>
+        <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Drop Column
+        </h3>
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="action" value="drop_col">
@@ -242,7 +287,8 @@
         class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
         <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
         </div>
-        <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Fill the Void
+        <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Fill Missing
+            Values
         </h3>
         <form method="post">
             {% csrf_token %}

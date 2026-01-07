@@ -189,6 +189,41 @@ def clean_data(request):
         elif path.endswith('.xlsx') or path.endswith('.xls'): df.to_excel(path, index=False)
         elif path.endswith('.json'): df.to_json(path)
 
+    # --- UNDO/REDO SYSTEM ---
+    history_dir = os.path.join(settings.MEDIA_ROOT, 'history', str(dataset_id))
+    if not os.path.exists(history_dir):
+        os.makedirs(history_dir)
+
+    def get_history_stacks():
+        undo_stack = request.session.get(f'undo_{dataset_id}', [])
+        redo_stack = request.session.get(f'redo_{dataset_id}', [])
+        return undo_stack, redo_stack
+
+    def save_history_stacks(undo, redo):
+        request.session[f'undo_{dataset_id}'] = undo
+        request.session[f'redo_{dataset_id}'] = redo
+        request.session.modified = True
+
+    def save_checkpoint(df):
+        undo, redo = get_history_stacks()
+        # Save current state to history before changing it
+        import time
+        timestamp = int(time.time() * 1000)
+        checkpoint_path = os.path.join(history_dir, f'cp_{timestamp}.csv')
+        df.to_csv(checkpoint_path, index=False)
+        
+        undo.append(checkpoint_path)
+        # Limit history to 10
+        if len(undo) > 10:
+            old = undo.pop(0)
+            if os.path.exists(old): os.remove(old)
+            
+        # Clear redo stack on new action
+        for r in redo:
+            if os.path.exists(r): os.remove(r)
+        
+        save_history_stacks(undo, [])
+
     df = load_df(file_path)
     if df is None: return render(request, 'clean.html', {'error': 'Failed to load data'})
 
@@ -196,18 +231,59 @@ def clean_data(request):
         action = request.POST.get('action')
         
         try:
-            if action == 'drop_col':
+            if action == 'undo':
+                undo, redo = get_history_stacks()
+                if undo:
+                    # Save current live state to redo stack
+                    import time
+                    timestamp = int(time.time() * 1000)
+                    redo_cp = os.path.join(history_dir, f'redo_{timestamp}.csv')
+                    df.to_csv(redo_cp, index=False)
+                    redo.append(redo_cp)
+                    
+                    # Target state
+                    target_path = undo.pop()
+                    df = pd.read_csv(target_path)
+                    save_df(df, file_path)
+                    os.remove(target_path) # Clean up history file after use
+                    
+                    save_history_stacks(undo, redo)
+                    return redirect('clean')
+
+            elif action == 'redo':
+                undo, redo = get_history_stacks()
+                if redo:
+                    # Save current live state back to undo stack
+                    import time
+                    timestamp = int(time.time() * 1000)
+                    undo_cp = os.path.join(history_dir, f'undo_{timestamp}.csv')
+                    df.to_csv(undo_cp, index=False)
+                    undo.append(undo_cp)
+                    
+                    # Target state
+                    target_path = redo.pop()
+                    df = pd.read_csv(target_path)
+                    save_df(df, file_path)
+                    os.remove(target_path)
+                    
+                    save_history_stacks(undo, redo)
+                    return redirect('clean')
+
+            elif action == 'drop_col':
+                save_checkpoint(df)
                 col = request.POST.get('column')
                 if col in df.columns:
                     df.drop(columns=[col], inplace=True)
             
             elif action == 'rename_col':
+                save_checkpoint(df)
                 old_name = request.POST.get('old_name')
                 new_name = request.POST.get('new_name')
                 if old_name in df.columns and new_name:
                     df.rename(columns={old_name: new_name}, inplace=True)
 
             elif action == 'fill_na':
+                save_checkpoint(df)
                 col = request.POST.get('column')
                 method = request.POST.get('method')
                 if col in df.columns:
@@ -221,10 +297,14 @@ def clean_data(request):
                          df.dropna(subset=[col], inplace=True)
             
             elif action == 'drop_duplicates':
+                save_checkpoint(df)
                 df.drop_duplicates(inplace=True)
             
-            # NEW: Data Type Conversion
+            # ... and so on for other actions. 
+            # To be thorough I should add save_checkpoint(df) to all other actions.
+            
             elif action == 'convert_dtype':
+                save_checkpoint(df)
                 col = request.POST.get('column')
                 dtype = request.POST.get('dtype')
                 if col in df.columns:
@@ -240,8 +320,8 @@ def clean_data(request):
                     except:
                         pass
             
-            # NEW: Text Cleaning
             elif action == 'clean_text':
+                save_checkpoint(df)
                 col = request.POST.get('column')
                 operation = request.POST.get('operation')
                 if col in df.columns and df[col].dtype == 'object':
@@ -254,16 +334,16 @@ def clean_data(request):
                     elif operation == 'empty_to_nan':
                         df[col] = df[col].replace('', pd.NA)
             
-            # NEW: Value Replacement
             elif action == 'replace_value':
+                save_checkpoint(df)
                 col = request.POST.get('column')
                 old_value = request.POST.get('old_value')
                 new_value = request.POST.get('new_value')
                 if col in df.columns:
                     df[col] = df[col].replace(old_value, new_value)
             
-            # NEW: Row Filtering
             elif action == 'filter_rows':
+                save_checkpoint(df)
                 col = request.POST.get('column')
                 operator = request.POST.get('operator')
                 value = request.POST.get('value')
@@ -282,8 +362,8 @@ def clean_data(request):
                     except:
                         pass
             
-            # NEW: Outlier Handling
             elif action == 'handle_outliers':
+                save_checkpoint(df)
                 col = request.POST.get('column')
                 method = request.POST.get('method')
                 if col in df.columns and pd.api.types.is_numeric_dtype(df[col]):
@@ -297,8 +377,8 @@ def clean_data(request):
                         z_scores = np.abs(stats.zscore(df[col].dropna()))
                         df = df[(z_scores < 3) | df[col].isna()]
             
-            # NEW: Rare Category Grouping
             elif action == 'group_rare':
+                save_checkpoint(df)
                 col = request.POST.get('column')
                 threshold = float(request.POST.get('threshold', 0.01))
                 if col in df.columns:
@@ -306,14 +386,14 @@ def clean_data(request):
                     rare_categories = value_counts[value_counts < threshold].index
                     df[col] = df[col].replace(rare_categories, 'Other')
             
-            # NEW: Duplicate Removal by Columns
             elif action == 'drop_duplicates_cols':
+                save_checkpoint(df)
                 cols = request.POST.getlist('columns')
                 if cols:
                     df.drop_duplicates(subset=cols, inplace=True)
             
-            # NEW: Datetime Feature Extraction
             elif action == 'extract_datetime':
+                save_checkpoint(df)
                 col = request.POST.get('column')
                 features = request.POST.getlist('features')
                 if col in df.columns:
@@ -342,7 +422,7 @@ def clean_data(request):
     context = {
         'dataset': dataset,
         'columns': df.columns.tolist(),
-        'table': df.head(50).to_html(classes='min-w-full text-left text-sm whitespace-nowrap', index=False, border=0),
+        'table': df.to_html(classes='min-w-full text-left text-sm whitespace-nowrap', index=False, border=0),
         'total_rows': len(df)
     }
 
