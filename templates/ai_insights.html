@@ -34,7 +34,7 @@
         border-bottom-left-radius: 0.2rem;
         color: #ffcccc;
         box-shadow: 0 0 20px rgba(255, 41, 66, 0.1);
-        backdrop-filter: blur(5px);
+        /* backdrop-filter: blur(5px); Removed for performance */
     }
 
     .wanda-msg strong {
@@ -183,7 +183,7 @@
         </div>
 
         <!-- Input Area -->
-        <div class="p-6 bg-black/40 border-t border-white/5 relative backdrop-blur-sm">
+        <div class="p-6 bg-black/40 border-t border-white/5 relative">
             <form id="chat-form" onsubmit="handleSubmit(event)" class="relative">
                 {% csrf_token %}
                 <input type="text" id="user-input"

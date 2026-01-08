@@ -1,12 +1,34 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import JsonResponse, FileResponse
 from django.conf import settings
 from .models import Dataset
 import pandas as pd
 import os
 import requests
 import json
+import numpy as np
+from scipy import stats
+from functools import wraps
+from django.views.decorators.csrf import csrf_protect
+
+def dataset_required(view_func):
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        dataset_id = request.session.get('dataset_id')
+        if not dataset_id:
+            messages.warning(request, "Manifest a reality fragment first to access this ritual.")
+            return redirect('upload')
+        
+        try:
+            dataset = Dataset.objects.get(id=dataset_id)
+        except Dataset.DoesNotExist:
+            request.session.pop('dataset_id', None)
+            messages.warning(request, "The reality fragment has collapsed. Please manifest a new one.")
+            return redirect('upload')
+            
+        return view_func(request, *args, dataset=dataset, **kwargs)
+    return _wrapped_view
 
 def home(request):
     """Redirects to the upload page."""
@@ -114,25 +136,18 @@ def upload_file(request):
             pass
 
     # Hall of Records: Load all history
+    if not request.GET.get('id'):
+        request.session.pop('dataset_id', None)
+    
     history = Dataset.objects.order_by('-uploaded_at')
     return render(request, 'upload.html', {'history': history})
 
 import pandas as pd
 import os
 
-def report(request):
+@dataset_required
+def report(request, dataset):
     """Displays EDA report."""
-    dataset_id = request.session.get('dataset_id')
-    if not dataset_id:
-        messages.warning(request, "Manifest a reality fragment first to access the Report.")
-        return redirect('upload')
-    
-    try:
-        dataset = Dataset.objects.get(id=dataset_id)
-    except Dataset.DoesNotExist:
-        request.session.pop('dataset_id', None)
-        messages.warning(request, "Dataset no longer exists. Please upload a new one.")
-        return redirect('upload')
     file_path = dataset.file.path
     
     try:
@@ -238,19 +253,10 @@ def report(request):
 
     return render(request, 'report.html', context)
 
-def clean_data(request):
+@dataset_required
+def clean_data(request, dataset):
     """Data cleaning interface."""
-    dataset_id = request.session.get('dataset_id')
-    if not dataset_id:
-        messages.warning(request, "Manifest a reality fragment first to access the Cleaning ritual.")
-        return redirect('upload')
-    
-    try:
-        dataset = Dataset.objects.get(id=dataset_id)
-    except Dataset.DoesNotExist:
-        request.session.pop('dataset_id', None)
-        messages.warning(request, "Dataset no longer exists. Please upload a new one.")
-        return redirect('upload')
+    dataset_id = dataset.id
     file_path = dataset.file.path
     
     # helper for loading
@@ -523,6 +529,20 @@ def clean_data(request):
                     except:
                         pass
             
+            elif action == 'label_encode':
+                save_checkpoint(df)
+                col = request.POST.get('column')
+                if col in df.columns:
+                    df[col] = df[col].astype('category').cat.codes
+            
+            elif action == 'one_hot_encode':
+                save_checkpoint(df)
+                col = request.POST.get('column')
+                if col in df.columns:
+                    dummies = pd.get_dummies(df[col], prefix=col)
+                    df = pd.concat([df, dummies], axis=1)
+                    df.drop(columns=[col], inplace=True)
+            
             # Recalculate Chaos Score after any ritual
             if action not in ['undo', 'redo', 'get_guidance']:
                 save_df(df, file_path)
@@ -570,32 +590,43 @@ def clean_data(request):
             return JsonResponse({'status': 'success', 'html': guidance_html})
         return JsonResponse({'status': 'error', 'message': 'The void is silent.'})
 
+    # --- PAGINATION ---
+    page = int(request.GET.get('page', 1))
+    page_size = 20
+    total_rows = len(df)
+    total_pages = (total_rows // page_size) + (1 if total_rows % page_size > 0 else 0)
+    
+    # Ensure page is within bounds
+    page = max(1, min(page, total_pages or 1))
+    
+    start_idx = (page - 1) * page_size
+    end_idx = start_idx + page_size
+    
+    # Paginated table for display
+    df_page = df.iloc[start_idx:end_idx]
+    table_html = df_page.to_html(classes='min-w-full text-left text-sm whitespace-nowrap', index=False, border=0)
+
     # Prepare context
     context = {
         'dataset': dataset,
         'columns': df.columns.tolist(),
-        'table': df.to_html(classes='min-w-full text-left text-sm whitespace-nowrap', index=False, border=0),
-        'total_rows': len(df)
+        'table': table_html,
+        'total_rows': total_rows,
+        'current_page': page,
+        'total_pages': total_pages,
+        'has_next': page < total_pages,
+        'has_prev': page > 1,
+        'next_page': page + 1,
+        'prev_page': page - 1,
     }
 
     return render(request, 'clean.html', context)
 
-from django.http import JsonResponse
-import numpy as np
 
-def visualize(request):
+
+@dataset_required
+def visualize(request, dataset):
     """Visualization interface."""
-    dataset_id = request.session.get('dataset_id')
-    if not dataset_id:
-        messages.warning(request, "Manifest a reality fragment first to access Visualizations.")
-        return redirect('upload')
-    
-    try:
-        dataset = Dataset.objects.get(id=dataset_id)
-    except Dataset.DoesNotExist:
-        request.session.pop('dataset_id', None)
-        messages.warning(request, "Dataset no longer exists. Please upload a new one.")
-        return redirect('upload')
     file_path = dataset.file.path
     
     # Simple load helper (duplicate logic, could be refactored)
@@ -757,22 +788,11 @@ def visualize(request):
     }
     return render(request, 'visualize.html', context)
 
-import requests
-from django.conf import settings
 
-def ai_insights(request):
+
+@dataset_required
+def ai_insights(request, dataset):
     """AI Chat interface."""
-    dataset_id = request.session.get('dataset_id')
-    if not dataset_id:
-        messages.warning(request, "Manifest a reality fragment first to access AI Insights.")
-        return redirect('upload')
-    
-    try:
-        dataset = Dataset.objects.get(id=dataset_id)
-    except Dataset.DoesNotExist:
-        request.session.pop('dataset_id', None)
-        messages.warning(request, "Dataset no longer exists. Please upload a new one.")
-        return redirect('upload')
     
     if request.method == 'POST':
         user_message = request.POST.get('message')
@@ -834,4 +854,80 @@ def ai_insights(request):
             return JsonResponse({'error': str(e)}, status=500)
 
     return render(request, 'ai_insights.html', {'dataset': dataset})
+
+@dataset_required
+def download_dataset(request, dataset):
+    """Allows downloading the current modified dataset as Excel."""
+    file_path = dataset.file.path
+    
+    # Load and convert to Excel if it's not already
+    try:
+        if file_path.endswith('.csv'):
+            df = pd.read_csv(file_path)
+        elif file_path.endswith('.json'):
+            df = pd.read_json(file_path)
+        else:
+            df = pd.read_excel(file_path)
+        
+        # Save to a temporary excel file
+        excel_path = file_path.rsplit('.', 1)[0] + '_final.xlsx'
+        df.to_excel(excel_path, index=False)
+        
+        # Clean filename: Ensure it has no dots except for .xlsx
+        clean_name = dataset.name.rsplit('.', 1)[0].replace('.', '_')
+        download_name = f"{clean_name}.xlsx"
+        
+        # Proper FileResponse usage for attachments
+        response = FileResponse(
+            open(excel_path, 'rb'),
+            as_attachment=True,
+            filename=download_name,
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        return response
+    except Exception as e:
+        # Fallback to direct file serving (e.g. as CSV or raw)
+        clean_name = dataset.name.rsplit('.', 1)[0].replace('.', '_')
+        fallback_ext = 'csv' if file_path.endswith('.csv') else 'file'
+        response = FileResponse(open(file_path, 'rb'), as_attachment=True, filename=f"{clean_name}.{fallback_ext}")
+        return response
+
+@dataset_required
+def update_cell(request, dataset):
+    """Updates a single cell in the dataset via AJAX."""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            row_idx = int(data.get('row'))
+            col_name = data.get('col')
+            new_value = data.get('value')
+            
+            file_path = dataset.file.path
+            if file_path.endswith('.csv'): df = pd.read_csv(file_path)
+            else: df = pd.read_excel(file_path)
+            
+            # Manual edit doesn't trigger checkpoint for performance unless we want it
+            # But here we'll do it for consistency
+            # save_checkpoint(df) 
+            
+            # Update cell
+            original_val = df.iloc[row_idx, df.columns.get_loc(col_name)]
+            
+            # Try to match the type of the original value
+            try:
+                if pd.api.types.is_numeric_dtype(df[col_name]):
+                    new_value = float(new_value) if '.' in str(new_value) else int(new_value)
+            except:
+                pass
+            
+            df.iloc[row_idx, df.columns.get_loc(col_name)] = new_value
+            
+            # Save
+            if file_path.endswith('.csv'): df.to_csv(file_path, index=False)
+            else: df.to_excel(file_path, index=False)
+            
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=405)
 

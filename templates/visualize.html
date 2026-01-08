@@ -152,6 +152,24 @@
                     <i class="fa-solid fa-chevron-down absolute right-3 top-3.5 text-gray-500 pointer-events-none"></i>
                 </div>
             </div>
+
+            <!-- Custom Labels -->
+            <div class="pt-4 border-t border-white/10 space-y-4">
+                <span class="text-[10px] text-gray-500 font-bold uppercase tracking-widest block text-center">Custom
+                    Ritual Labels</span>
+                <div class="grid grid-cols-1 gap-4">
+                    <div>
+                        <input type="text" id="chart-title" placeholder="Chart Title (The Prophecy)"
+                            class="w-full bg-black/30 border border-white/10 rounded p-2 text-xs text-white focus:border-scarlet outline-none font-inter">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" id="custom-x-label" placeholder="X-Axis Label"
+                            class="w-full bg-black/30 border border-white/10 rounded p-2 text-xs text-white focus:border-scarlet outline-none font-inter">
+                        <input type="text" id="custom-y-label" placeholder="Y-Axis Label"
+                            class="w-full bg-black/30 border border-white/10 rounded p-2 text-xs text-white focus:border-scarlet outline-none font-inter">
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Action -->
@@ -311,6 +329,13 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
+                        title: {
+                            display: true,
+                            text: document.getElementById('chart-title').value || 'Data Realm Manifestation',
+                            color: '#111',
+                            font: { family: 'Cinzel, serif', size: 16, weight: 'bold' },
+                            padding: { bottom: 20 }
+                        },
                         legend: {
                             labels: {
                                 color: '#333',
@@ -329,10 +354,22 @@
                     },
                     scales: {
                         y: {
+                            title: {
+                                display: true,
+                                text: document.getElementById('custom-y-label').value || yVal || 'Value',
+                                color: '#333',
+                                font: { weight: 'bold' }
+                            },
                             grid: { color: 'rgba(0, 0, 0, 0.1)' },
                             ticks: { color: '#666' }
                         },
                         x: {
+                            title: {
+                                display: true,
+                                text: document.getElementById('custom-x-label').value || xVal || 'Dimension',
+                                color: '#333',
+                                font: { weight: 'bold' }
+                            },
                             grid: { color: 'rgba(0, 0, 0, 0.1)' },
                             ticks: { color: '#666' }
                         }

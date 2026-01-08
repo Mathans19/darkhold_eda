@@ -9,6 +9,8 @@ urlpatterns = [
     path('clean/', views.clean_data, name='clean'),
     path('visualize/', views.visualize, name='visualize'),
     path('ai-insights/', views.ai_insights, name='ai_insights'),
+    path('download/', views.download_dataset, name='download_dataset'),
+    path('update-cell/', views.update_cell, name='update_cell'),
 ]
 # Force Reload
 

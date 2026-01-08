@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}Reshape Reality: {{ dataset.name }} | Scarlet EDA{% endblock %}
-
+{% load static %}
 {% block extra_head %}
 <style>
     /* Table specific overrides for glass look */
@@ -29,7 +29,6 @@
         font-weight: 600;
         letter-spacing: 0.05em;
         white-space: nowrap;
-        backdrop-filter: blur(4px);
     }
 
     .dataframe tbody tr {
@@ -121,6 +120,31 @@
     .rune-glow {
         text-shadow: 0 0 10px rgba(255, 41, 66, 0.8);
     }
+
+    /* Constrain layout to viewport and remove page scroll */
+    body {
+        overflow: hidden !important;
+        height: 100vh !important;
+    }
+
+    main {
+        padding-top: 1.5rem !important;
+        padding-bottom: 0.5rem !important;
+        height: calc(100vh - 80px) !important;
+        /* 80px is nav height */
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+    }
+
+    footer {
+        display: none !important;
+    }
+
+    /* Adjust the inner container to fill the new main height */
+    .h-\[calc\(100vh-140px\)\] {
+        height: 100% !important;
+    }
 </style>
 {% endblock %}
 
@@ -129,132 +153,183 @@
 
     <div class="flex-1 flex gap-6 min-h-0">
         <!-- Main Content (Table) -->
-        <div class="flex-1 flex flex-col min-w-0">
-            <!-- Toolbar -->
-            <div
-                class="glass-dark p-4 rounded-xl mb-6 flex flex-wrap items-center gap-y-4 gap-x-2 sticky top-0 z-30 shadow-neon">
-                <!-- ... existing toolbar content ... (I will replace this with the expanded version) -->
-                <div class="flex items-center mr-4">
-                    <h2 class="text-xl font-bold text-white flex items-center gap-3">
-                        <i class="fa-solid fa-wand-magic-sparkles text-scarlet animate-pulse"></i>
-                        <span style="font-family: 'Cinzel', serif;">Studio</span>
-                    </h2>
+        <!-- Left Sidebar: Studio Toolbar (Vertical) -->
+        <div id="studio-sidebar"
+            class="w-64 flex-shrink-0 glass-dark rounded-xl flex flex-col p-4 overflow-y-auto custom-scrollbar transition-all duration-500 ease-in-out">
+            <div class="flex items-center mb-6">
+                <h2 class="text-xl font-bold text-white flex items-center gap-3">
+                    <i class="fa-solid fa-wand-magic-sparkles text-scarlet animate-pulse"></i>
+                    <span style="font-family: 'Cinzel', serif;">Studio</span>
+                </h2>
+            </div>
+
+            <!-- History Controls -->
+            <div class="flex items-center gap-2 bg-black/40 p-2 rounded-lg border border-white/10 mb-6 justify-center">
+                <form method="post" class="inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="undo">
+                    <button type="submit" class="p-2 hover:text-scarlet transition-colors text-white/70"
+                        title="Undo Last Ritual">
+                        <i class="fa-solid fa-rotate-left text-lg"></i>
+                    </button>
+                </form>
+                <div class="h-6 w-px bg-white/10 mx-2"></div>
+                <form method="post" class="inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="redo">
+                    <button type="submit" class="p-2 hover:text-scarlet transition-colors text-white/70"
+                        title="Redo Ritual">
+                        <i class="fa-solid fa-rotate-right text-lg"></i>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Vertical Action Groups -->
+            <div class="flex flex-col gap-4">
+                <!-- Group: AI Magic -->
+                <div class="flex flex-col gap-2 p-2 rounded-lg bg-scarlet/5 border border-scarlet/20">
+                    <span class="text-[10px] text-scarlet font-bold uppercase tracking-widest text-center mb-1">Chaos
+                        Magic</span>
+                    <button onclick="openModal('auto-ritual-modal')"
+                        class="btn-energy bg-scarlet/20 text-[11px] px-3 py-2 flex items-center gap-2 w-full justify-start"
+                        title="One-Click AI Cleaning Ritual">
+                        <i class="fa-solid fa-wand-sparkles text-scarlet w-5 text-center"></i> Auto-Ritual
+                    </button>
+                    <button onclick="toggleWanda()"
+                        class="btn-energy bg-scarlet/10 text-[11px] px-3 py-2 flex items-center gap-2 w-full justify-start hover:text-scarlet transition-colors text-white/70"
+                        title="Consult Wanda's Grimoire">
+                        <i class="fa-solid fa-hat-wizard text-lg w-5 text-center"></i> Wanda's Guidance
+                    </button>
                 </div>
 
-                <!-- History Controls -->
-                <div class="flex items-center gap-2 bg-black/40 p-1 rounded-lg border border-white/10">
-                    <form method="post" class="inline">
+                <!-- Group: Schema -->
+                <div class="flex flex-col gap-2 p-2 rounded-lg bg-white/5 border border-white/5">
+                    <span
+                        class="text-[10px] text-gray-500 font-bold uppercase tracking-widest text-center mb-1">Schema</span>
+                    <button onclick="openModal('rename-modal')"
+                        class="btn-energy text-[11px] px-3 py-2 flex items-center gap-2 w-full justify-start"
+                        title="Rename Column">
+                        <i class="fa-solid fa-pen-to-square w-5 text-center"></i> Rename
+                    </button>
+                    <button onclick="openModal('drop-modal')"
+                        class="btn-energy text-[11px] px-3 py-2 flex items-center gap-2 w-full justify-start"
+                        title="Drop Column">
+                        <i class="fa-solid fa-trash-can w-5 text-center"></i> Drop
+                    </button>
+                    <button onclick="openModal('convert-dtype-modal')"
+                        class="btn-energy text-[11px] px-3 py-2 flex items-center gap-2 w-full justify-start"
+                        title="Change Data Type">
+                        <i class="fa-solid fa-arrows-rotate w-5 text-center"></i> Type
+                    </button>
+                </div>
+
+                <!-- Group: Cleaning -->
+                <div class="flex flex-col gap-2 p-2 rounded-lg bg-white/5 border border-white/5">
+                    <span
+                        class="text-[10px] text-gray-500 font-bold uppercase tracking-widest text-center mb-1">Cleaning</span>
+                    <button onclick="openModal('fill-modal')"
+                        class="btn-energy text-[11px] px-3 py-2 flex items-center gap-2 w-full justify-start"
+                        title="Fill Nulls">
+                        <i class="fa-solid fa-fill-drip w-5 text-center"></i> Fill
+                    </button>
+                    <form method="post" class="w-full">
                         {% csrf_token %}
-                        <input type="hidden" name="action" value="undo">
-                        <button type="submit" class="p-2 hover:text-scarlet transition-colors text-white/70"
-                            title="Undo Last Ritual">
-                            <i class="fa-solid fa-rotate-left text-lg"></i>
+                        <input type="hidden" name="action" value="drop_duplicates">
+                        <button type="submit"
+                            class="btn-energy text-[11px] px-3 py-2 flex items-center gap-2 w-full justify-start"
+                            onclick="return confirm('Prune timelines (remove duplicates)?')" title="Remove Duplicates">
+                            <i class="fa-solid fa-clone w-5 text-center"></i> Dups
                         </button>
                     </form>
-                    <form method="post" class="inline">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="redo">
-                        <button type="submit" class="p-2 hover:text-scarlet transition-colors text-white/70"
-                            title="Redo Ritual">
-                            <i class="fa-solid fa-rotate-right text-lg"></i>
-                        </button>
-                    </form>
+                    <button onclick="openModal('outliers-modal')"
+                        class="btn-energy text-[11px] px-3 py-2 flex items-center gap-2 w-full justify-start"
+                        title="Detect & Handle Outliers">
+                        <i class="fa-solid fa-compass-drafting w-5 text-center"></i> Outliers
+                    </button>
                 </div>
 
-                <div class="h-8 w-px bg-white/10 mx-2"></div>
-
-                <!-- Action Groups -->
-                <div class="flex flex-wrap items-center gap-2">
-                    <!-- Group: Schema -->
-                    <div class="flex items-center gap-1.5 p-1 rounded-lg bg-white/5 border border-white/5">
-                        <button onclick="openModal('rename-modal')"
-                            class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5" title="Rename Column">
-                            <i class="fa-solid fa-pen-to-square"></i> Rename
-                        </button>
-                        <button onclick="openModal('drop-modal')"
-                            class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5" title="Drop Column">
-                            <i class="fa-solid fa-trash-can"></i> Drop
-                        </button>
-                        <button onclick="openModal('convert-dtype-modal')"
-                            class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5"
-                            title="Change Data Type">
-                            <i class="fa-solid fa-arrows-rotate"></i> Type
-                        </button>
-                    </div>
-
-                    <!-- Group: Cleaning -->
-                    <div class="flex items-center gap-1.5 p-1 rounded-lg bg-white/5 border border-white/5">
-                        <button onclick="openModal('fill-modal')"
-                            class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5" title="Fill Nulls">
-                            <i class="fa-solid fa-fill-drip"></i> Fill
-                        </button>
-                        <form method="post" class="inline">
-                            {% csrf_token %}
-                            <input type="hidden" name="action" value="drop_duplicates">
-                            <button type="submit" class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5"
-                                onclick="return confirm('Prune timelines (remove duplicates)?')"
-                                title="Remove Duplicates">
-                                <i class="fa-solid fa-clone"></i> Dups
-                            </button>
-                        </form>
-                        <button onclick="openModal('outliers-modal')"
-                            class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5"
-                            title="Detect & Handle Outliers">
-                            <i class="fa-solid fa-compass-drafting"></i> Outliers
-                        </button>
-                    </div>
-
-                    <!-- Group: Manipulation -->
-                    <div class="flex items-center gap-1.5 p-1 rounded-lg bg-white/5 border border-white/5">
-                        <button onclick="openModal('filter-rows-modal')"
-                            class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5" title="Filter Rows">
-                            <i class="fa-solid fa-filter"></i> Filter
-                        </button>
-                        <button onclick="openModal('replace-value-modal')"
-                            class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5"
-                            title="Replace Specific Values">
-                            <i class="fa-solid fa-exchange-alt"></i> Replace
-                        </button>
-                        <button onclick="openModal('group-rare-modal')"
-                            class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5"
-                            title="Group Infrequent Categories">
-                            <i class="fa-solid fa-layer-group"></i> Group
-                        </button>
-                    </div>
-
-                    <!-- Group: Feature Engineering -->
-                    <div class="flex items-center gap-1.5 p-1 rounded-lg bg-white/5 border border-white/5">
-                        <button onclick="openModal('clean-text-modal')"
-                            class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5"
-                            title="Clean String Content">
-                            <i class="fa-solid fa-broom"></i> Text
-                        </button>
-                        <button onclick="openModal('datetime-extract-modal')"
-                            class="btn-energy text-[11px] px-3 py-1.5 flex items-center gap-1.5"
-                            title="Extract Features from Date">
-                            <i class="fa-solid fa-calendar-days"></i> Dates
-                        </button>
-                    </div>
-
-                    <!-- Group: AI Magic -->
-                    <div class="flex items-center gap-1.5 p-1 rounded-lg bg-scarlet/5 border border-scarlet/20">
-                        <button onclick="openModal('auto-ritual-modal')"
-                            class="btn-energy bg-scarlet/20 text-[11px] px-3 py-1.5 flex items-center gap-1.5"
-                            title="One-Click AI Cleaning Ritual">
-                            <i class="fa-solid fa-wand-sparkles text-scarlet"></i> Auto-Ritual
-                        </button>
-                        <button onclick="toggleWanda()" class="p-2 hover:text-scarlet transition-colors text-white/70"
-                            title="Consult Wanda's Grimoire">
-                            <i class="fa-solid fa-hat-wizard text-lg"></i>
-                        </button>
-                    </div>
+                <!-- Group: Manipulation -->
+                <div class="flex flex-col gap-2 p-2 rounded-lg bg-white/5 border border-white/5">
+                    <span
+                        class="text-[10px] text-gray-500 font-bold uppercase tracking-widest text-center mb-1">Refine</span>
+                    <button onclick="openModal('filter-rows-modal')"
+                        class="btn-energy text-[11px] px-3 py-2 flex items-center gap-2 w-full justify-start"
+                        title="Filter Rows">
+                        <i class="fa-solid fa-filter w-5 text-center"></i> Filter
+                    </button>
+                    <button onclick="openModal('replace-value-modal')"
+                        class="btn-energy text-[11px] px-3 py-2 flex items-center gap-2 w-full justify-start"
+                        title="Replace Specific Values">
+                        <i class="fa-solid fa-exchange-alt w-5 text-center"></i> Replace
+                    </button>
+                    <button onclick="openModal('group-rare-modal')"
+                        class="btn-energy text-[11px] px-3 py-2 flex items-center gap-2 w-full justify-start"
+                        title="Group Infrequent Categories">
+                        <i class="fa-solid fa-layer-group w-5 text-center"></i> Group
+                    </button>
                 </div>
 
-                <div class="ml-auto flex items-center gap-4">
-                    <div class="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-cinzel">
-                        <span class="text-scarlet font-bold">{{ total_rows }}</span> Records Loaded
-                    </div>
+                <!-- Group: Feature Engineering -->
+                <div class="flex flex-col gap-2 p-2 rounded-lg bg-white/5 border border-white/5">
+                    <span
+                        class="text-[10px] text-gray-500 font-bold uppercase tracking-widest text-center mb-1">Features</span>
+                    <button onclick="openModal('clean-text-modal')"
+                        class="btn-energy text-[11px] px-3 py-2 flex items-center gap-2 w-full justify-start"
+                        title="Clean String Content">
+                        <i class="fa-solid fa-broom w-5 text-center"></i> Text
+                    </button>
+                    <button onclick="openModal('datetime-extract-modal')"
+                        class="btn-energy text-[11px] px-3 py-2 flex items-center gap-2 w-full justify-start"
+                        title="Extract Features from Date">
+                        <i class="fa-solid fa-calendar-days w-5 text-center"></i> Dates
+                    </button>
                 </div>
+
+                <!-- Group: Encoding -->
+                <div class="flex flex-col gap-2 p-2 rounded-lg bg-white/5 border border-white/5">
+                    <span
+                        class="text-[10px] text-gray-500 font-bold uppercase tracking-widest text-center mb-1">Encoding</span>
+                    <button onclick="openModal('label-encode-modal')"
+                        class="btn-energy text-[11px] px-3 py-2 flex items-center gap-2 w-full justify-start"
+                        title="Label Encoding (Cat -> Num)">
+                        <i class="fa-solid fa-list-ol w-5 text-center"></i> Label Encode
+                    </button>
+                    <button onclick="openModal('one-hot-encode-modal')"
+                        class="btn-energy text-[11px] px-3 py-2 flex items-center gap-2 w-full justify-start"
+                        title="One-Hot Encoding (Cat -> Columns)">
+                        <i class="fa-solid fa-table-columns w-5 text-center"></i> One-Hot Encode
+                    </button>
+                </div>
+
+                <!-- Group: Extraction -->
+                <div class="flex flex-col gap-2 p-2 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
+                    <span
+                        class="text-[10px] text-emerald-500 font-bold uppercase tracking-widest text-center mb-1">Extraction</span>
+                    <a href="{% url 'download_dataset' %}"
+                        class="btn-energy bg-emerald-500/10 text-[11px] px-3 py-2 flex items-center gap-2 w-full justify-start hover:text-emerald-400 transition-colors text-white/70"
+                        title="Download Modified Reality">
+                        <i class="fa-solid fa-download text-lg w-5 text-center"></i> Download Dataset
+                    </a>
+                </div>
+            </div>
+
+            <div class="mt-auto pt-6 text-center">
+                <div class="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-cinzel">
+                    <span class="text-scarlet font-bold">{{ total_rows }}</span> Records
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Main Content (Table) -->
+        <div id="main-table-area" class="flex-1 flex flex-col min-w-0 transition-all duration-500 ease-in-out">
+            <!-- Table Header / Controls -->
+            <div class="flex justify-between items-center mb-4 px-2">
+                <h3 class="text-white font-cinzel text-lg tracking-wider">Data Reality</h3>
+                <button onclick="toggleFullScreenTable()"
+                    class="btn-energy text-[10px] px-3 py-1 flex items-center gap-2 hover:bg-scarlet hover:text-white transition-all">
+                    <i id="fullscreen-icon" class="fa-solid fa-expand"></i> <span id="fullscreen-text">Full View</span>
+                </button>
             </div>
 
             <!-- Data Table Container -->
@@ -266,8 +341,40 @@
                     <p>{{ error }}</p>
                 </div>
                 {% else %}
+                {% if table %}
                 {{ table|safe }}
                 {% endif %}
+                {% endif %}
+            </div>
+
+            <!-- Table Pagination Controls -->
+            <div class="mt-4 flex justify-between items-center px-2">
+                <div class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">
+                    Page <span class="text-scarlet">{{ current_page }}</span> of {{ total_pages }}
+                </div>
+                <div class="flex gap-4">
+                    {% if has_prev %}
+                    <a href="?page={{ prev_page }}"
+                        class="btn-energy text-[10px] px-4 py-1 flex items-center gap-2 hover:bg-scarlet hover:text-white transition-all">
+                        <i class="fa-solid fa-chevron-left"></i> Previous
+                    </a>
+                    {% else %}
+                    <button class="btn-energy text-[10px] px-4 py-1 opacity-20 cursor-not-allowed" disabled>
+                        <i class="fa-solid fa-chevron-left"></i> Previous
+                    </button>
+                    {% endif %}
+
+                    {% if has_next %}
+                    <a href="?page={{ next_page }}"
+                        class="btn-energy text-[10px] px-4 py-1 flex items-center gap-2 hover:bg-scarlet hover:text-white transition-all">
+                        Next <i class="fa-solid fa-chevron-right"></i>
+                    </a>
+                    {% else %}
+                    <button class="btn-energy text-[10px] px-4 py-1 opacity-20 cursor-not-allowed" disabled>
+                        Next <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                    {% endif %}
+                </div>
             </div>
         </div>
 
@@ -766,6 +873,72 @@
         </div>
     </div>
 
+    <!-- Label Encode Modal -->
+    <div id="label-encode-modal"
+        class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
+        <div
+            class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
+            </div>
+            <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">Label
+                Encode</h3>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="label_encode">
+                <div class="space-y-5">
+                    <div>
+                        <label
+                            class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Column</label>
+                        <select name="column"
+                            class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                            {% for col in columns %}
+                            <option value="{{ col }}">{{ col }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-8 flex justify-end gap-4">
+                    <button type="button" onclick="closeModal('label-encode-modal')"
+                        class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
+                    <button type="submit" class="btn-energy text-sm px-6 py-2">Encode</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- One-Hot Encode Modal -->
+    <div id="one-hot-encode-modal"
+        class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
+        <div
+            class="glass-dark w-full max-w-md p-6 rounded-xl border border-scarlet/30 shadow-neon relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-scarlet to-transparent">
+            </div>
+            <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-2 font-cinzel text-glow">One-Hot
+                Encode</h3>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="one_hot_encode">
+                <div class="space-y-5">
+                    <div>
+                        <label
+                            class="block text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">Column</label>
+                        <select name="column"
+                            class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-scarlet outline-none font-inter">
+                            {% for col in columns %}
+                            <option value="{{ col }}">{{ col }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-8 flex justify-end gap-4">
+                    <button type="button" onclick="closeModal('one-hot-encode-modal')"
+                        class="px-4 py-2 text-gray-400 hover:text-white font-cinzel text-sm uppercase transition-colors">Abort</button>
+                    <button type="submit" class="btn-energy text-sm px-6 py-2">Expand</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Auto-Ritual Modal -->
     <div id="auto-ritual-modal"
         class="fixed inset-0 z-50 hidden flex items-center justify-center bg-void/80 backdrop-blur-sm">
@@ -904,6 +1077,96 @@
             btn.addEventListener('mouseleave', () => {
                 document.querySelectorAll('.ghost-row').forEach(tr => tr.classList.remove('ghost-row'));
             });
+        });
+
+        // Full Screen Toggle
+        function toggleFullScreenTable() {
+            const sidebar = document.getElementById('studio-sidebar');
+            const wandaSidebar = document.getElementById('wanda-sidebar');
+            const mainContainer = document.getElementById('main-table-area');
+            const btnText = document.getElementById('fullscreen-text');
+            const btnIcon = document.getElementById('fullscreen-icon');
+
+            if (sidebar.style.display === 'none') {
+                // Return to normal
+                sidebar.style.display = 'flex';
+                wandaSidebar.style.display = 'flex';
+                btnText.textContent = "Full View";
+                btnIcon.className = "fa-solid fa-expand";
+            } else {
+                // Go Full Screen
+                sidebar.style.display = 'none';
+                wandaSidebar.style.display = 'none';
+                btnText.textContent = "Close View";
+                btnIcon.className = "fa-solid fa-compress";
+            }
+        }
+
+        // --- Manual Reality Warping (Cell Editing) ---
+        function initEditableTable() {
+            const table = document.querySelector('.dataframe');
+            if (!table) return;
+
+            const rows = table.querySelectorAll('tbody tr');
+            const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.innerText.trim());
+
+            rows.forEach((row, rowIdx) => {
+                const cells = row.querySelectorAll('td');
+                cells.forEach((cell, colIdx) => {
+                    const colName = headers[colIdx];
+                    if (!colName) return;
+
+                    cell.setAttribute('contenteditable', 'true');
+                    cell.classList.add('focus:bg-scarlet/20', 'focus:outline-none', 'transition-colors', 'cursor-text');
+
+                    let originalValue = cell.innerText.trim();
+
+                    cell.onblur = () => {
+                        const newValue = cell.innerText.trim();
+                        if (newValue !== originalValue) {
+                            updateRealityCell(rowIdx, colName, newValue, cell);
+                            originalValue = newValue; // Update original to avoid redundant triggers
+                        }
+                    };
+                });
+            });
+        }
+
+        async function updateRealityCell(rowIdx, colName, newValue, cellElement) {
+            const currentPage = parseInt("{{ current_page }}");
+            const pageSize = 20;
+            const globalRowIdx = (currentPage - 1) * pageSize + rowIdx;
+
+            try {
+                const response = await fetch("{% url 'update_cell' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': "{{ csrf_token }}"
+                    },
+                    body: JSON.stringify({
+                        row: globalRowIdx,
+                        col: colName,
+                        value: newValue
+                    })
+                });
+
+                const data = await response.json();
+                if (data.status === 'success') {
+                    cellElement.classList.add('bg-green-500/20');
+                    setTimeout(() => cellElement.classList.remove('bg-green-500/20'), 1000);
+                } else {
+                    alert("Reality stabilization failed: " + data.message);
+                    window.location.reload();
+                }
+            } catch (e) {
+                alert("Reality failure: " + e.message);
+                window.location.reload();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initEditableTable();
         });
     </script>
     {% endblock %}

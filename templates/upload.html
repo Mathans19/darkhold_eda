@@ -87,7 +87,7 @@
             </div>
 
             <div id="drop-zone"
-                class="relative bg-black/60 rounded-xl min-h-[320px] flex flex-col items-center justify-center cursor-pointer upload-zone backdrop-blur-md p-8">
+                class="relative bg-black/60 rounded-xl min-h-[320px] flex flex-col items-center justify-center cursor-pointer upload-zone p-8">
                 <input type="file" name="file" id="file-input" class="hidden" accept=".csv,.xlsx,.xls,.json">
 
                 <div id="upload-prompt" class="z-20 flex flex-col items-center space-y-6">
@@ -123,7 +123,7 @@
 
                 <!-- Overlay -->
                 <div id="upload-status"
-                    class="absolute inset-0 bg-void/90 backdrop-blur-sm z-30 flex flex-col items-center justify-center opacity-0 pointer-events-none transition-opacity">
+                    class="absolute inset-0 bg-void/90 z-30 flex flex-col items-center justify-center opacity-0 pointer-events-none transition-opacity">
                     <div class="relative">
                         <div class="w-20 h-20 border-t-2 border-b-2 border-scarlet rounded-full animate-spin"></div>
                         <div class="absolute inset-0 flex items-center justify-center">

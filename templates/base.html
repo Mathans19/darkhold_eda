@@ -49,7 +49,8 @@
             --color-void: #050102;
             --color-scarlet: #ff2942;
             --color-blood: #8a0000;
-            --glass-bg: rgba(20, 0, 0, 0.6);
+            --glass-bg: rgba(5, 1, 2, 0.85);
+            /* Darker and more opaque for performance */
             --glass-border: rgba(255, 41, 66, 0.2);
             --text-glow: 0 0 10px rgba(255, 41, 66, 0.6);
 
@@ -115,7 +116,7 @@
         /* Glassmorphism & Depth Hierarchy */
         .glass-dark {
             background: var(--glass-bg);
-            backdrop-filter: blur(12px);
+            /* backdrop-filter: blur(12px); Removed for performance Optimization */
             border: 1px solid var(--glass-border);
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.8);
             transform: translateZ(var(--depth-panel));
@@ -702,6 +703,46 @@
         <div class="manifest-text" id="ritual-text">INSCRIBING REALITY...</div>
     </div>
 
+    <!-- Navigation Confirmation Modal -->
+    <div id="nav-confirm-modal"
+        class="fixed inset-0 z-[60000] hidden items-center justify-center p-4 bg-void/90 backdrop-blur-sm">
+        <div class="glass-dark max-w-md w-full p-8 border border-scarlet/30 shadow-neon">
+            <div class="text-center space-y-6">
+                <div
+                    class="w-16 h-16 rounded-full border border-scarlet/50 flex items-center justify-center mx-auto text-scarlet text-3xl shadow-neon">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <h3 class="text-2xl font-cinzel text-white tracking-widest uppercase">Reality Collapse?</h3>
+                <p class="text-gray-400 font-inter">Returning to the Upload ritual will dissolve your current
+                    manifestation. All unsaved changes to this reality will be lost. Proceed?</p>
+                <div class="flex gap-4">
+                    <button onclick="closeNavConfirm()"
+                        class="flex-1 px-4 py-3 border border-white/10 text-white font-cinzel uppercase tracking-widest hover:bg-white/5 transition-all">Cancel</button>
+                    <button id="confirm-nav-btn" class="flex-1 btn-energy py-3 text-sm">Dissolve Reality</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Locked Modal -->
+    <div id="nav-locked-modal"
+        class="fixed inset-0 z-[60000] hidden items-center justify-center p-4 bg-void/90 backdrop-blur-sm">
+        <div class="glass-dark max-w-md w-full p-8 border border-scarlet/30 shadow-neon">
+            <div class="text-center space-y-6">
+                <div
+                    class="w-16 h-16 rounded-full border border-scarlet/50 flex items-center justify-center mx-auto text-scarlet text-3xl shadow-neon">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <h3 class="text-2xl font-cinzel text-white tracking-widest uppercase">Ritual Locked</h3>
+                <p class="text-gray-400 font-inter">You must manifest a reality fragment (upload a dataset) before this
+                    ritual can be accessed.</p>
+                <div class="flex gap-4">
+                    <button onclick="closeLockedModal()" class="flex-1 btn-energy py-3 text-sm">Understood</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Side Panel Character Guide -->
     <div id="guide-panel">
         <div class="guide-content">
@@ -848,20 +889,75 @@
         };
 
         // Reality Navigation Ritual
+        let pendingNavUrl = null;
+
+        function showNavConfirm(url) {
+            pendingNavUrl = url;
+            const modal = document.getElementById('nav-confirm-modal');
+            modal.style.display = 'flex';
+            gsap.fromTo(modal.children[0], { scale: 0.9, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: "power2.out" });
+        }
+
+        function closeNavConfirm() {
+            const modal = document.getElementById('nav-confirm-modal');
+            gsap.to(modal.children[0], {
+                scale: 0.9, opacity: 0, duration: 0.3, ease: "power2.in", onComplete: () => {
+                    modal.style.display = 'none';
+                    pendingNavUrl = null;
+                }
+            });
+        }
+
+        document.getElementById('confirm-nav-btn').addEventListener('click', () => {
+            if (pendingNavUrl) {
+                const url = pendingNavUrl;
+                closeNavConfirm();
+                GrimoireRitual.manifest(url);
+            }
+        });
+
         document.querySelectorAll('.ritual-nav').forEach(link => {
             link.addEventListener('click', (e) => {
-                const targetUrl = new URL(link.href);
+                const targetUrlStr = link.href;
+                const targetUrl = new URL(targetUrlStr);
+
                 if (window.location.pathname === targetUrl.pathname) return;
+
                 e.preventDefault();
-                GrimoireRitual.manifest(link.href);
+
+                // If navigating to Upload/Home and a dataset is active, show confirmation
+                const uploadUrl = "{% url 'upload' %}";
+                const homeUrl = "{% url 'home' %}";
+                const isHeadingToUpload = targetUrl.pathname === uploadUrl || targetUrl.pathname === homeUrl || targetUrl.pathname === "/";
+                const hasActiveDataset = ("{% if request.session.dataset_id %}true{% else %}false{% endif %}" === "true");
+
+                if (isHeadingToUpload && hasActiveDataset) {
+                    showNavConfirm(targetUrlStr);
+                } else {
+                    GrimoireRitual.manifest(targetUrlStr);
+                }
             });
         });
 
         // Locked Navigation Handler
+        function showLockedModal() {
+            const modal = document.getElementById('nav-locked-modal');
+            modal.style.display = 'flex';
+            gsap.fromTo(modal.children[0], { scale: 0.9, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: "power2.out" });
+        }
+
+        function closeLockedModal() {
+            const modal = document.getElementById('nav-locked-modal');
+            gsap.to(modal.children[0], {
+                scale: 0.9, opacity: 0, duration: 0.3, ease: "power2.in", onComplete: () => {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+
         document.querySelectorAll('.locked-nav').forEach(span => {
             span.addEventListener('click', () => {
-                const reason = span.getAttribute('data-reason');
-                ChaosNotification.show(reason);
+                showLockedModal();
             });
         });
 
@@ -893,7 +989,7 @@
                 onComplete: () => fragment.remove()
             });
         }
-        setInterval(spawnFragment, 1200);
+        setInterval(spawnFragment, 4000);
 
         // Particle System - Floating Runes
         const canvas = document.getElementById('particle-canvas');
@@ -940,7 +1036,7 @@
         }
 
         function initParticles() {
-            for (let i = 0; i < 50; i++) particles.push(new Particle());
+            for (let i = 0; i < 20; i++) particles.push(new Particle());
         }
         function animateParticles() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1128,6 +1224,13 @@
                 const msg = document.getElementById('guide-message');
 
                 if (data && img && msg) {
+                    // Restrict guide to only once per session per section
+                    const storageKey = `guide_shown_${guideKey}`;
+                    if (sessionStorage.getItem(storageKey)) {
+                        document.getElementById('guide-panel').style.display = 'none';
+                        return;
+                    }
+
                     img.src = `{% static 'images/' %}${data.char}`;
                     msg.innerText = data.msg;
 
@@ -1145,7 +1248,12 @@
                     img.style.filter = `drop-shadow(0 0 20px ${glowColor}) drop-shadow(0 0 40px ${glowColor})`;
 
                     // Entrance & Exit Ritual
-                    const tl = gsap.timeline();
+                    const tl = gsap.timeline({
+                        onComplete: () => {
+                            sessionStorage.setItem(storageKey, 'true');
+                        }
+                    });
+
                     tl.fromTo("#guide-panel",
                         { x: 300, autoAlpha: 0 },
                         { x: 0, autoAlpha: 1, duration: 0.8, ease: "power3.out", delay: 0.5 }
